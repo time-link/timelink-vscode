@@ -1,30 +1,77 @@
 # kleio README
 
-Time Link is a web application that manages databases for micro-historical and genealogical research.
+MHK Time Link is a web application that manages databases for micro-historical and genealogical research. It allows source-oriented data input, using Manfred Thaller Kleio notation, record linking and network analysis. The development of MHK is coordinated by Joaquim Carvalho, of the University of Coimbra, Portugal.
 
-Create package using vsce (The Visual Studio Code Extension Manager):
-vsce package
+This extension adds support for the Kleio notation in Visual Studio Code editor, including Syntax Highlighting and Snippet completion.
 
-Install Extension on VS Code
-1. Select extensions on VS Code left toolbar
-2. Click "More actions" (three dots) and select install from VSIX
+## Install Extension in Visual Studio Code (VS Code)
+1. Download VS Code extension from [repository](https://github.com/time-link/timelink-vscode/blob/master/kleio.vsix)
+2. Select extensions on VS Code left toolbar
+3. Click "More actions" (three dots) and select install from VSIX
 
 ## Features
 
-TODO: 
+* Syntax Highlighting
+* Snippet completion for baptism acts (actos de baptismo).
 
 ## Requirements
 
-TODO: If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+This bundle requires Visual Studio Code with extensions support.
+
+## Development Notes
+
+### Adding New Features
+
+The grammar was converted from TextMate using the yo code extension generator. The included Time Link bundle (Time Link.tmbundle) can be used to easily make changes to the TextMate grammar, and then convert the bundle to a VSCode extension.
+
+### Create a package:
+#### Create a package using vsce (The Visual Studio Code Extension Manager)
+
+```console
+foo@bar:~$ cd timelink-vscode
+user@timelink-vscode:~$ vsce package
+```
+
+#### Convert TextMate bundle features using [Yeoman](https://yeoman.io/learning/) code extension generator:
+
+```console
+foo@bar:~$ yo code
+```
+
+**Select "New Language Support"**
+Input the "URL or file to import" (e.g. 'TimeLink.tmbundle/Syntaxes/Kleio.tmLanguage')
+Accept the defaults
+
+**Select "New Code Snippets"**
+Input the "URL or file to import" (e.g. 'TimeLink.tmbundle/Snippets')
+Accept the defaults
+
+#### Assign keybindings to snippets
+Keymaps from TextMate Bundles (Key Equivalent) don't migrate to VS Code.
+Keybindings must be added manually to package.json file to 'keybindings' section where 'name' is the snippet name:
+
+```
+"key": "ctrl+alt+k",
+"mac": "shift+cmd+k",
+"command": "editor.action.insertSnippet",
+"when": "editorTextFocus",
+"args": {
+    "langId": "kleio",
+    "name": "kleio"
+}
+```
 
 ## Known Issues
 
-TODO: Calling out known issues can help limit users opening duplicate issues against your extension.
+None so far!
 
 ## Release Notes
 
-TODO: Users appreciate release notes as you update your extension.
+
+### 0.0.2
+
+This version adds support for basic snippet completion (baptism acts only).
 
 ### 0.0.1
 
-Very initial release of Time Link extension for VSCode
+Very initial release of Time Link extension for VSCode. Includes syntax highlighting.
