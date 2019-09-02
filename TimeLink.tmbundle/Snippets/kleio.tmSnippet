@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string>kleio\$gacto.str/${1:prefix="${2:text}"}
+	fonte\$${3:id}</string>
+	<key>keyEquivalent</key>
+	<string>@k</string>
+	<key>name</key>
+	<string>kleio</string>
+	<key>tabTrigger</key>
+	<string>kleio</string>
+	<key>uuid</key>
+	<string>101DB37C-FA45-4FD9-BB2C-557DDF348874</string>
+</dict>
+</plist>
