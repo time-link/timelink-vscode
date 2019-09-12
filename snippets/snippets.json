@@ -4,6 +4,11 @@
 		"body": "bap\\$${1:id}/${2:dia}/${3:mes}/${4:ano}/${5:fl}/${6:local}/${7:nome}/${8:obs= \"${9:texto}\"}",
 		"description": "bap"
 	},
+	"cas": {
+		"prefix": "cas",
+		"body": "cas\\$${1:id}/${2:dia}/${3:mes}/${4:ano}/${5:local}/${6:sacerdote?}\n\n\tnoivo\\$${7:nome do noivo}\n\t\n\t\tpnoivo\\$${8:nome do pai do noivo}\n\t\t\tls\\$${9|residencia,profissao,cargo,morto,…|}/${10:valor}\n\n\t\tmnoivo\\$${11:nome da mãe do noivo}\n\n\tnoiva\\$${12:nome da noiva}\n\n\t\tpnoiva\\$${13:nome do pai da noiva}\n\n\t\tmnoiva\\$${14:nome do mae da noiva}\n\n\ttest\\$${15:nome da testemunha}\n\t\tls\\$${16|residencia,profissao,cargo,morto,…|}/${17:valor}",
+		"description": "cas"
+	},
 	"fonte": {
 		"prefix": "fonte",
 		"body": "fonte\\$${1:id}",
@@ -13,6 +18,11 @@
 		"prefix": "kleio",
 		"body": "kleio\\$gacto.str/${1:prefix=\"${2:text}\"}\n\tfonte\\$${3:id}",
 		"description": "kleio"
+	},
+	"ls": {
+		"prefix": "ls",
+		"body": "ls\\$${1:atributo/${2:valor}",
+		"description": "ls"
 	},
 	"mad": {
 		"prefix": "mad",
@@ -38,5 +48,10 @@
 		"prefix": "pn",
 		"body": "pn\\$${1:nome}",
 		"description": "pn"
+	},
+	"rel": {
+		"prefix": "rel",
+		"body": "rel\\$${1|parentesco,sociabilidade,profissional,…|}/${2:valor}/${3:nome}/${4:id}",
+		"description": "rel"
 	}
 }

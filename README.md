@@ -27,9 +27,20 @@ The grammar was converted from TextMate using the yo code extension generator. T
 ### Create a package:
 #### Create a package using vsce (The Visual Studio Code Extension Manager)
 
+Install typescript and extension dependencies:
+
+```console
+foo@bar:~$ npm install -g typescript
+foo@bar:~$ cd timelink-vscode
+user@timelink-vscode:~$ npm install
+```
+
+Generate the package:
+
 ```console
 foo@bar:~$ cd timelink-vscode
 user@timelink-vscode:~$ vsce package
+user@timelink-vscode:~$ code --install-extension kleio-x.x.vsix
 ```
 
 #### Convert TextMate bundle features using [Yeoman](https://yeoman.io/learning/) code extension generator:

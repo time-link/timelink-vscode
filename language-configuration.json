@@ -1,7 +1,7 @@
 {
     "comments": {
         // symbol used for single line comment. Remove this entry if your language does not support line comments
-        "lineComment": "//",
+        "lineComment": "#",
         // symbols used for start and end a block comment. Remove this entry if your language does not support block comments
         "blockComment": [ "/*", "*/" ]
     },
@@ -26,5 +26,14 @@
         ["(", ")"],
         ["\"", "\""],
         ["'", "'"]
-    ]
+    ],
+    "indentationRules": {
+        "increaseIndentPattern": "^\\s*(kleio|fonte|bap)\\s*"
+        /* 
+        - increaseIndentPattern: If a line matches this pattern, then all the lines after it should be indented once (until another rule matches).
+        - decreaseIndentPattern: If a line matches this pattern, then all the lines after it should be unindented once (until another rule matches).
+        - indentNextLinePattern: If a line matches this pattern, then only the next line after it should be indented once.
+        - unIndentedLinePattern: If a line matches this pattern, then its indentation should not be changed and it should not be evaluated against the other rules.
+        */
+      }
 }

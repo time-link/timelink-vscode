@@ -1,10 +1,8 @@
 kleio$gacto.str/prefix="text"
 	fonte$aaaa
-kleio$gacto.str/prefix="text"
-	fonte$id
-	
+
 kleio$gacto.str/prefix=stmaria 
-	fonte$baptismos1562-1563/localizacao-a.d.l./freguesia de santa maria de  obidos 
+fonte$baptismos1562-1563/localizacao-a.d.l./freguesia de santa maria de  obidos 
 
 		bap$b1562-1/20/12/1562/fl.1/igreja de santa maria/manuel frois(cura)/obs= assina manuel frois (cura) 
 		n$luzia/f/id=b1562-1-per1
@@ -12,10 +10,43 @@ kleio$gacto.str/prefix=stmaria
 		mn$brites fernandes/id=b1562-1-per3
 		pad1$afonso fernandes/id=b1562-1-per4
 		mad1$catarina andre/obs=ha mais informacao, no entanto nao se le por estar rasgado/id=b1562-1-per5 
-	
-	fonte$baptismos15
-		bap$teste
-			mn$manuel/teste/id=prefix-2
-		bap$hdhdh/12/23/212/jhkjjk/jiohfjh/298hjflhlkj/obs= "hgdhghd"
-		n$teste/m
+
+		cas$hjhkj/8/8/8/hjkhlj/hjhk
+			noivo$Carlos
+				pnoivo$António
+					ls$cargo/professor
+				mnoivo$Amélia
+			noiva$Carolina
+				pnoiva$Manuel
+				mnoiva$Maria
+			test$Abílio
+				ls$residencia/Coimbra
+				rel$casamento/jkjk/kjk/id
+	fonte$baptismos156
+		bap$um teste
+			n$teste
+			pn$aasas
+			mn$aaa
+			pad1$teste
+			mad1$teste
+
+kleio$gacto.str/prefix="text"
+	fonte$aaaaaa
+		bap$2sjdkhjk/8/8/8/bhgj/89hjhb/hhkj/obs= "jhjhkhlljk"
+			n$teste/m
+			pn$adad
+
+kleio$baptismos156
+	fonte$hdjahfdkjahdkja
+		bap$id/dia/mes/ano/fl/local/nome/obs= "texto"
+			n$teste/f
+			pn$nome
+				rel$profissional/tetet/djahdjahdj/8989
+		bap$id/dia/mes/ano/fl/local/nome/obs= "texto"
+			n$a/f
+	fonte$hdjahdkja
+		bap$id/dia/mes/ano/fl/local/nome/obs= "texto"
 		
+kleio$gacto.str/prefix="text"
+	fonte$id
+	bap$id/dia/mes/ano/fl/local/nome/obs= "texto"

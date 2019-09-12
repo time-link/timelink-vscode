@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string>cas\$${1:id}/${2:dia}/${3:mes}/${4:ano}/${5:local}/${6:sacerdote?}
+
+	noivo\$${7:nome do noivo}
+	
+		pnoivo\$${8:nome do pai do noivo}
+			ls\$${9|residencia,profissao,cargo,morto,…|}/${10:valor}
+
+		mnoivo\$${11:nome da mãe do noivo}
+
+	noiva\$${12:nome da noiva}
+
+		pnoiva\$${13:nome do pai da noiva}
+
+		mnoiva\$${14:nome do mae da noiva}
+
+	test\$${15:nome da testemunha}
+		ls\$${16|residencia,profissao,cargo,morto,…|}/${17:valor}</string>
+	<key>name</key>
+	<string>cas</string>
+	<key>tabTrigger</key>
+	<string>cas</string>
+	<key>uuid</key>
+	<string>1487C809-3861-4C94-8264-949BCCF83993</string>
+</dict>
+</plist>
