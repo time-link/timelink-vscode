@@ -28,12 +28,7 @@
         ["'", "'"]
     ],
     "indentationRules": {
-        "increaseIndentPattern": "^\\s*(kleio|fonte|bap)\\s*"
-        /* 
-        - increaseIndentPattern: If a line matches this pattern, then all the lines after it should be indented once (until another rule matches).
-        - decreaseIndentPattern: If a line matches this pattern, then all the lines after it should be unindented once (until another rule matches).
-        - indentNextLinePattern: If a line matches this pattern, then only the next line after it should be indented once.
-        - unIndentedLinePattern: If a line matches this pattern, then its indentation should not be changed and it should not be evaluated against the other rules.
-        */
+        "increaseIndentPattern": "^\\s*(kleio|fonte|bap|cas).*$",
+        "decreaseIndentPattern": "^[ ]+$" /* empty lines doesn't work... */
       }
 }
