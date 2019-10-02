@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>content</key>
-	<string>fonte\$${1:id}</string>
-	<key>keyEquivalent</key>
-	<string>@f</string>
+	<string>fonte\$${1:fonteid}/${2:tipo="${3:tipo opcional}"}
+
+   $0</string>
 	<key>name</key>
 	<string>fonte</string>
 	<key>tabTrigger</key>

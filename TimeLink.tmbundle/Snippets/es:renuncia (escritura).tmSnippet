@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string>escritura\$${1:id}/${2:dia}/${3:mes}/${4:ano}/tipo=renuncia/fol=${5:fol}/loc=${6:localização}/sumario=${7:sumário}/obs=${8:observações (opcional)}
+
+   senhorio$/id=
+       ls$profissao/
+       ls$residencia/
+   
+   referida$/id=
+       ls$cargo
+
+   renunciante$
+       ls$residencia/
+       rel$parentesco/mulher//id=
+
+   procurador$/id=
+       ls$profissao/
+       ls$residencia/
+       rel$sociabilidade/
+
+   test$
+       ls$cargo/
+       ls$residencia/
+
+   test$
+       ls$cargo/
+       ls$residencia/
+
+   test$
+       ls$cargo/
+
+   tabeliao$/obs=pelo registo
+       ls$intitulacao
+       ls$sinal/sim/obs=
+
+	referido$/
+	
+	referido$/
+	
+	referido$/
+
+   bem$
+       atr$localizacao/
+       atr$confrontacoes/
+       atr$confrontacoes/
+       atr$confrontacoes/
+       rel$posse/pertenceu//
+       rel$posse/pertence/mosteiro de santa clara/
+
+</string>
+	<key>name</key>
+	<string>es/renuncia (escritura)</string>
+	<key>tabTrigger</key>
+	<string>es/renuncia</string>
+	<key>uuid</key>
+	<string>E1346968-21F5-4594-90C5-763AD74529BA</string>
+</dict>
+</plist>

@@ -3,28 +3,14 @@
 <plist version="1.0">
 <dict>
 	<key>content</key>
-	<string>cas\$${1:id}/${2:dia}/${3:mes}/${4:ano}/${5:local}/${6:sacerdote?}
+	<string>cas\$${1:id}/${2:dia}/${3:mes}/${4:ano}/${5:fol}/${6:local}/${7:celebrante}
 
-	noivo\$${7:nome do noivo}
-	
-		pnoivo\$${8:nome do pai do noivo}
-			ls\$${9|residencia,profissao,cargo,morto,…|}/${10:valor}
-
-		mnoivo\$${11:nome da mãe do noivo}
-
-	noiva\$${12:nome da noiva}
-
-		pnoiva\$${13:nome do pai da noiva}
-
-		mnoiva\$${14:nome do mae da noiva}
-
-	test\$${15:nome da testemunha}
-		ls\$${16|residencia,profissao,cargo,morto,…|}/${17:valor}</string>
+   $0</string>
 	<key>name</key>
 	<string>cas</string>
 	<key>tabTrigger</key>
 	<string>cas</string>
 	<key>uuid</key>
-	<string>1487C809-3861-4C94-8264-949BCCF83993</string>
+	<string>1D17D5A0-CB11-44D1-A2D5-D5E582C3A208</string>
 </dict>
 </plist>

@@ -5,7 +5,8 @@
 	<key>contactEmailRot13</key>
 	<string></string>
 	<key>description</key>
-	<string>Time Link kleio-clio notation support.</string>
+	<string>Time Link kleio-clio notation support.
+Time Link is a web application that manages databases for micro-historical research.</string>
 	<key>name</key>
 	<string>Time Link</string>
 	<key>uuid</key>

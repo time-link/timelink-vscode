@@ -3,9 +3,8 @@
 <plist version="1.0">
 <dict>
 	<key>content</key>
-	<string>mn\$${1:nome}</string>
-	<key>keyEquivalent</key>
-	<string>@m</string>
+	<string>mn\$${1:nome da mãe}
+$0</string>
 	<key>name</key>
 	<string>mn</string>
 	<key>tabTrigger</key>

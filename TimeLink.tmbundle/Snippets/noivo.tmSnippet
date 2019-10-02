@@ -3,14 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>content</key>
-	<string>bap\$${1:id}/${2:dia}/${3:mes}/${4:ano}/${5:fl}/${6:local}/${7:celebrante}/${8:obs= "${9:texto}"}
-
-   $0</string>
+	<string>noivo\$${1:nome do noivo}
+$0</string>
 	<key>name</key>
-	<string>bap</string>
+	<string>noivo</string>
 	<key>tabTrigger</key>
-	<string>bap</string>
+	<string>noivo</string>
 	<key>uuid</key>
-	<string>4CE55BF8-5245-445E-804F-6C57EDDDD8FB</string>
+	<string>ED0F2FC6-8D03-4121-9E8D-1F94143B73B3</string>
 </dict>
 </plist>

@@ -3,7 +3,8 @@
 <plist version="1.0">
 <dict>
 	<key>content</key>
-	<string>ls\$${1:atributo/${2:valor}</string>
+	<string>ls\$${1:atributo}/${2:valor}
+$0</string>
 	<key>name</key>
 	<string>ls</string>
 	<key>tabTrigger</key>

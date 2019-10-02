@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string>obito\$${1:id}/${2:dia}/${3:mes}/${4:ano}/${5:fol}/${7:celebrante}
+
+   n\$${8:nome}
+      ls\$${9|naturalidade,residencia,profissao,cargo,…|}/${10:valor}
+
+   pai\$${11:nome do pai}
+      ls\$${12|naturalidade,residencia,profissao,cargo,morto,…|}/${13:valor}
+
+   mae\$${14:nome da mãe}
+
+   locs\$${15:local de sepultura}
+
+   locs\$${16:local de falecimento}
+
+   causa\$${17:causa de morte}
+
+   sacr\$${18:sacramentos}
+
+   oficios\$${19:oficios}
+
+   testamento\$${20|s,n|}
+</string>
+	<key>name</key>
+	<string>obitof</string>
+	<key>tabTrigger</key>
+	<string>obitof</string>
+	<key>uuid</key>
+	<string>B773287A-EE44-48BD-9FB8-217C0CABC91D</string>
+</dict>
+</plist>

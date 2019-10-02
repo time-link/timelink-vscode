@@ -3,9 +3,8 @@
 <plist version="1.0">
 <dict>
 	<key>content</key>
-	<string>pn\$${1:nome}</string>
-	<key>keyEquivalent</key>
-	<string>@p</string>
+	<string>pn\$${1:nome}
+$0</string>
 	<key>name</key>
 	<string>pn</string>
 	<key>tabTrigger</key>

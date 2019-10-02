@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string>bap\$${1:id}/${2:dia}/${3:mes}/${4:ano}/${5:fol}/${6:local}/${7:celebrante}/${8:obs= "${9:texto}"}
+
+   n\$${10:nome}/${11|f,m|}
+
+      pn\$${12:nome pai}
+         ls\$${13|residencia,profissao,cargo,morto,…|}/${14:valor}
+
+         ppn$${15:nome avô parterno}
+            ls\$${16|residencia,profissao,cargo,morto,…|}/${17:valor}
+
+         mpn$${18:nome avó paterna}
+
+      mn\$${19:nome mãe}
+
+         pmn\$${20:nome avô materno}
+            ls\$${21|residencia,profissao,cargo,morto,…|}/${22:valor}
+
+         mmn\$${23:nome avó materna}
+
+      pad\$${24:padrinho}
+         ls\$${25|residencia,profissao,cargo,morto,…|}/${26:valor}
+
+      mad\$${27:madrinha}
+
+		 pmad\$${28:pai da madrinha}
+
+         mrmad\${29:mrmad?}
+		    ls\$${30|residencia,profissao,cargo,morto,…|}/${31:valor}</string>
+	<key>name</key>
+	<string>bapfavos</string>
+	<key>tabTrigger</key>
+	<string>bapfa</string>
+	<key>uuid</key>
+	<string>03CC9E49-6591-4543-930D-83EB0572362D</string>
+</dict>
+</plist>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string>escritura\$${1:id}/${2:dia}/${3:mes}/${4:ano}/tipo=testamento/fol=${5:fol}/loc=${6:localização}/sumario=${7:sumário}/obs=${8:observações (opcional)}
+
+   testadorr$/id=
+       ls$profissao/
+       ls$residencia/
+       ls$motivacoes/
+		  
+   procurador$/id=
+       ls$cargo
+       rel$sociabilidade/procurador/
+   
+   testamenteiro$
+       ls$residencia/
+       
+   testamentario$/id=
+	  ls$profissao/
+	  ls$residencia/
+	  rel$sociabilidade/
+
+   testamentario$/id=
+	  ls$profissao/
+	  ls$residencia/
+	  rel$sociabilidade/
+
+   test$
+       ls$cargo/
+       ls$residencia/
+
+   test$
+       ls$cargo/
+       ls$residencia/
+
+   test$
+       ls$cargo/
+
+   tabeliao$/obs=pelo registo
+       ls$intitulacao
+       ls$sinal/sim/obs=
+
+	referido$/
+	
+	referido$/
+	
+	referido$/
+
+   bem$
+       atr$localizacao/
+       atr$confrontacoes/
+       atr$confrontacoes/
+       atr$confrontacoes/
+       rel$posse/pertenceu//                            
+       rel$posse/pertence//
+       rel$posse/por testamento//
+
+
+   bem$
+       atr$localizacao/
+       atr$confrontacoes/
+       atr$confrontacoes/
+       atr$confrontacoes/
+       rel$posse/pertenceu//                            
+       rel$posse/pertence//
+       rel$posse/por testamento//
+
+   bem$
+       atr$localizacao/
+       atr$confrontacoes/
+       atr$confrontacoes/
+       atr$confrontacoes/
+       rel$posse/pertenceu//                            
+       rel$posse/pertence//
+       rel$posse/por testamento//
+</string>
+	<key>name</key>
+	<string>es/testamento (escritura)</string>
+	<key>tabTrigger</key>
+	<string>es/testamento</string>
+	<key>uuid</key>
+	<string>4D05963B-DEC0-467A-97D8-0E86DB417445</string>
+</dict>
+</plist>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string>escritura\$${1:id}/${2:dia}/${3:mes}/${4:ano}/tipo=aforamento/fol=${5:fol}/loc=${6:localização}/sumario=${7:sumário}/obs=${8:observações (opcional)}
+
+   senhorio\$${9:_}/id=${10:_}
+	
+   referida\$/id=${11:_}
+      ls\$cargo/abadessa
+
+   foreiro\$/id=${12:_}
+      ls\$profissao/${13:_}
+      ls\$residencia/${14:_}
+
+   foreira\$/${15:_}
+      ls\$residencia/${16:_}
+      rel\$parentesco/mulher/${17:_}/id=${12:_}
+
+   test\$${19:_}
+       ls\$cargo/${20:_}
+       ls\$residencia/${21:_}
+
+   test\$${22:_}
+       ls\$cargo/${23:_}
+       ls\$residencia/${24:_}
+
+   test\$${25:_}
+       ls\$cargo/${26:_}
+
+   tabeliao\$${27:_}/obs=pelo registo
+       ls\$intitulacao
+       ls\$sinal/sim/obs=${28:_}
+
+   referido\$/${29:_}
+
+   aforamento\$${30:_}
+       atr\$localizacao/${31:_}
+       atr\$confrontacoes/${32:_}
+       atr\$confrontacoes/${33:_}
+       atr\$confrontacoes/${34:_}
+       rel\$posse/pertenceu/${35:_}/${36:_}
+       rel\$posse/pertence/mosteiro de santa clara/${37:_}
+       rel\$por aforamento/${38:_}
+       atr\$condicoes/${39:_}
+       atr\$duracao/${40:_}/${41:_}
+       atr\$renda principal tipo/fixa em dinheiro, fixa em genero, mista, parciaria
+       atr\$renda principal valor/${42:_}/obs=${43:_}
+       atr\$renda acessoria/${44:_}
+       atr\$pagamento da renda principal/${45:_}
+       atr\$pagamento da renda acessoria/${46:_}
+       atr\$caucao/${47:_}
+
+
+
+
+</string>
+	<key>name</key>
+	<string>es/aforamento (escritura)</string>
+	<key>tabTrigger</key>
+	<string>es/aforamento</string>
+	<key>uuid</key>
+	<string>05431B5E-75AA-4C4C-BDA1-ED582C9DD7D2</string>
+</dict>
+</plist>

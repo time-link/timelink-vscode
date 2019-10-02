@@ -3,9 +3,8 @@
 <plist version="1.0">
 <dict>
 	<key>content</key>
-	<string>n\$${1:nome}/${2|f,m|}</string>
-	<key>keyEquivalent</key>
-	<string>@n</string>
+	<string>n\$${1:nome}/${2|f,m|}
+$0</string>
 	<key>name</key>
 	<string>n</string>
 	<key>tabTrigger</key>

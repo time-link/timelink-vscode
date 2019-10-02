@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string>escritura\$${1:id}/${2:dia}/${3:mes}/${4:ano}/tipo=doacao/fol=${5:fol}/loc=${6:localização}/sumario=${7:sumário}/obs=${8:observações (opcional)}
+
+   doador$/id=
+       ls$profissao/
+       ls$residencia/
+   
+   doadora$/id=
+       ls$cargo
+
+   donatario$
+       ls$residencia/
+       rel$parentesco/mulher//id=
+
+	referido$/id=
+	  ls$profissao/
+	  ls$residencia/
+	  rel$sociabilidade/
+
+   test$
+       ls$cargo/
+       ls$residencia/
+
+   test$
+       ls$cargo/
+       ls$residencia/
+
+   test$
+       ls$cargo/
+
+   tabeliao$/obs=pelo registo
+       ls$intitulacao
+       ls$sinal/sim/obs=
+
+	referido$/
+	
+	referido$/
+	
+	referido$/
+
+   bem$
+       atr$localizacao/
+       atr$confrontacoes/
+       atr$confrontacoes/
+       atr$confrontacoes/
+       rel$posse/pertenceu//                            
+       rel$posse/pertence//
+       rel$posse/por doacao//
+
+</string>
+	<key>name</key>
+	<string>es/doacao (escritura)</string>
+	<key>tabTrigger</key>
+	<string>es/doacao</string>
+	<key>uuid</key>
+	<string>ECC1699F-D622-4AB0-BE22-A41AC996E12A</string>
+</dict>
+</plist>

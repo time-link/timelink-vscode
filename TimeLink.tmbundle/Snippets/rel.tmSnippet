@@ -3,7 +3,8 @@
 <plist version="1.0">
 <dict>
 	<key>content</key>
-	<string>rel\$${1|parentesco,sociabilidade,profissional,…|}/${2:valor}/${3:nome}/${4:id}</string>
+	<string>rel\$${1|parentesco,sociabilidade,profissional,…|}/${2:valor}/${3:nome}/${4:id}
+$0</string>
 	<key>name</key>
 	<string>rel</string>
 	<key>tabTrigger</key>

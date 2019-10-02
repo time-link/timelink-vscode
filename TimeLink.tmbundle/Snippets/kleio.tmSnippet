@@ -3,10 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>content</key>
-	<string>kleio\$gacto.str/${1:prefix="${2:text}"}
-	fonte\$${3:id}</string>
-	<key>keyEquivalent</key>
-	<string>@k</string>
+	<string>kleio\$gacto.str/${1:prefix="${2:prefixo opcional}"}
+
+   $0</string>
 	<key>name</key>
 	<string>kleio</string>
 	<key>tabTrigger</key>

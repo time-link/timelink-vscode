@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string>bap\$${1:id}/${2:dia}/${3:mes}/${4:ano}/${5:fl}/${6:local}/${7:celebrante}/${8:obs= "${9:texto}"}
+
+   n\$${10:nome}/${11|f,m|}
+
+      pn\$${12:nome pai}
+         ls\$${13|residencia,profissao,cargo,morto,…|}/${14:valor}
+
+      mn\$${15:nome mãe}
+
+      pad1\$${16:padrinho}
+         ls\$${17|residencia,profissao,cargo,morto,…|}/${18:valor}
+
+      mad1\$${19:madrinha}/obs=${20:obs= "${21:texto}"}
+
+		 pmad1\$${22:pai da madrinha}
+
+         mrmad1${23:mrmad1}
+		    ls\$${24|residencia,profissao,cargo,morto,…|}/${25:valor}</string>
+	<key>name</key>
+	<string>bapf</string>
+	<key>tabTrigger</key>
+	<string>bapf</string>
+	<key>uuid</key>
+	<string>622BE484-D138-4AB7-A9B7-8AD64FCCE39D</string>
+</dict>
+</plist>
