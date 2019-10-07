@@ -78,6 +78,10 @@ None so far!
 
 ## Release Notes
 
+### 0.1.0
+
+This version completes support for snippet completion (baptismf, casamentof, obitof, escrituras).
+Includes basic hover information (static for now).
 
 ### 0.0.2
 
