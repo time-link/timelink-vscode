@@ -31,6 +31,7 @@ Install typescript and extension dependencies:
 
 ```console
 foo@bar:~$ npm install -g typescript
+foo@bar:~$ npm install -g vsce
 foo@bar:~$ cd timelink-vscode
 user@timelink-vscode:~$ npm install
 ```
