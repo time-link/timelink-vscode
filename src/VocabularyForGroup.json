@@ -1,0 +1,14 @@
+{
+    "name": "ls",
+    "atributes": {
+        "residencia": [
+            "ademia",
+            "coimbra",
+            "soure"
+        ],
+        "profissao": [
+            "comerciante",
+            "electricista"
+        ]
+    }
+}

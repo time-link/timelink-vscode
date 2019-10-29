@@ -1,0 +1,54 @@
+{
+    "path": "gacto2.str",
+    "groups": {
+        "kleio": {
+            "minimal": "",
+            "typical": "structure,translator,obs;",
+            "complete": "structure,translator,autorels,obs,prefix,translations;",
+            "occurs": [
+                "kleio"
+            ],
+            "includes": [
+                "fonte"
+            ]
+        },
+        "fonte": {
+            "minimal": "String",
+            "typical": "String",
+            "complete": "String",
+            "occurs": [
+                "group1",
+                "group2"
+            ],
+            "includes": [
+                "group2",
+                "group3"
+            ]
+        },
+        "bap": {
+            "minimal": "String",
+            "typical": "id,dia,mes,ano;",
+            "complete": "id,dia,mes,ano,dian,mesn,anon,celebrante;",
+            "occurs": [
+                "fonte"
+            ],
+            "includes": [
+                "celebrante",
+                "n"
+            ]
+        },
+        "cas": {
+            "minimal": "String",
+            "typical": "String",
+            "complete": "String",
+            "occurs": [
+                "group1",
+                "group2"
+            ],
+            "includes": [
+                "group2",
+                "group3"
+            ]
+        }
+    }
+}
