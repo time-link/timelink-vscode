@@ -75,10 +75,6 @@ export module HoverProvider {
 
         var idx = Object.keys(tmp).indexOf(hoveredWord);
         if (idx >= 0) {
-          console.log(Object.values(tmp)[idx].minimal);
-          console.log(Object.values(tmp)[idx].complete);
-          console.log(Object.values(tmp)[idx].includes);
-
           var hovertext = "**" + hoveredWord + "**";
           values.push(hovertext);
           

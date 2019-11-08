@@ -2,7 +2,7 @@
    "name": "kleio",
    "displayName": "Time Link Bundle",
    "description": "Time Link is a web application that manages databases for micro-historical research.",
-   "version": "0.2.0",
+   "version": "0.3.0",
    "publisher": "timelink",
    "engines": {
       "vscode": "^1.38.0"
@@ -17,7 +17,9 @@
    "icon": "images/icon.png",
    "activationEvents": [
       "onCommand:extension.helloWorld",
-      "onLanguage:kleio"
+      "onLanguage:kleio",
+      "onView:fileExplorer",
+      "onView:statusProvider"
    ],
    "main": "./out/extension.js",
    "contributes": {
@@ -70,7 +72,34 @@
                "name": "kleio"
             }
          }
-      ]
+      ],
+      "viewsContainers": {
+         "activitybar": [
+            {
+               "id": "package-explorer",
+               "title": "Time Link",
+               "icon": "images/icon.svg"
+            }
+         ]
+      },
+      "views": {
+         "package-explorer": [
+            {
+               "id": "fileExplorer",
+               "name": "Time Link File Explorer"
+            },
+            {
+               "id": "statusProvider",
+               "name": "Kleio Files Status"
+            }
+         ],
+         "explorer": [
+            {
+               "id": "fileExplorer",
+               "name": "Time Link File Explorer"
+            }
+         ]
+      }
    },
    "scripts": {
       "vscode:prepublish": "npm run compile",
@@ -81,13 +110,15 @@
    },
    "devDependencies": {
       "@types/glob": "^7.1.1",
+      "@types/mkdirp": "^0.5.2",
       "@types/mocha": "^5.2.6",
       "@types/node": "^10.12.21",
+      "@types/rimraf": "^2.0.3",
       "@types/vscode": "^1.38.0",
       "glob": "^7.1.4",
       "mocha": "^6.1.4",
-      "typescript": "^3.3.1",
       "tslint": "^5.12.1",
+      "typescript": "^3.3.1",
       "vscode-test": "^1.0.2"
    },
    "dependencies": {
