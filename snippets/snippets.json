@@ -89,11 +89,6 @@
 		"body": "kleio\\$gacto.str/${1:prefix=\"${2:prefixo opcional}\"}\n\n   $0",
 		"description": "kleio"
 	},
-	"ls": {
-		"prefix": "ls",
-		"body": "ls\\$${1:atributo}/${2:valor}\n$0",
-		"description": "ls"
-	},
 	"mad": {
 		"prefix": "mad",
 		"body": "mad\\$${1:nome}\n$0",

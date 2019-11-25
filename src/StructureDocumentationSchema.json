@@ -1,0 +1,16 @@
+{
+    "$id": "https://example.com/structure_documentation.schema.json",
+    "$schema": "http://example.com/draft-01/schema#",
+    "title": "Structure Documentation",
+    "type": "object",
+    "properties": {
+        "path": {
+            "type": "string",
+            "description": "Gacto file location path"
+        },
+        "groups": {
+            "type": "object",
+            "description": "Kleio group data."
+        }
+    }
+}
