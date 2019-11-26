@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 
+// TO BE REMOVED...
 export module FormattingProvider {
 
   export class Formatting {

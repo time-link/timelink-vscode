@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 //import * as mkdirp from 'mkdirp';
 //import * as rimraf from 'rimraf';
+import { DiagnosticsProvider } from './diagnostics';
 
 //#region Utilities
 
@@ -144,7 +145,7 @@ export class FileStat implements vscode.FileStat {
 	}
 }
 
-interface Entry {
+export interface Entry {
 	uri: vscode.Uri;
 	type: vscode.FileType;
 }
@@ -152,6 +153,7 @@ interface Entry {
 //#endregion
 
 export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscode.FileSystemProvider {
+	private diagnosticsProvider: DiagnosticsProvider.Diagnostics = new DiagnosticsProvider.Diagnostics();
 
 	private _onDidChangeFile: vscode.EventEmitter<vscode.FileChangeEvent[]>;
 
@@ -290,6 +292,9 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 		if (element.type === vscode.FileType.File) {
 			treeItem.command = { command: 'fileExplorer.openFile', title: "Open File", arguments: [element.uri], };
 			treeItem.contextValue = 'file';
+			if (element.uri.path.endsWith(".cli")) {
+				this.diagnosticsProvider.loadErrorsForCli(element.uri.path);
+			}
 		}
 		return treeItem;
 	}
