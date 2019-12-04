@@ -1,9 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { languages, Diagnostic, DiagnosticSeverity } from 'vscode';
-import { FileExplorer, Entry } from './fileExplorer';
 import * as path from 'path';
-import { print } from 'util';
 
 /*
 * Loads and displays errors from kleio rpt files
@@ -19,9 +17,12 @@ export module DiagnosticsProvider {
 
 		constructor() { }
 
+		/*
+		 * Returns Kleio admin token from mhk_system.properties
+		 */
 		loadAdminToken(basePath: string): Promise<string> {
 			return new Promise<string>((resolve) => {
-				let propertiesPath = basePath + "/mhk-home/system/conf/mhk_system.properties";
+				let propertiesPath = basePath + "/system/conf/mhk_system.properties";
 				vscode.workspace.openTextDocument(propertiesPath).then((document) => {
 					document.getText().split(/\r?\n/).forEach(element => {
 						if (element.startsWith("mhk.kleio.service.token.admin=")) {
@@ -32,6 +33,9 @@ export module DiagnosticsProvider {
 			});
 		}
 
+		/*
+		 * Calls Kleio Translation Service API with a POST request
+		 */
 		callTranslationService(filePath: string, token: string) {
 			var rp = require('request-promise');
 			var options = {
@@ -54,7 +58,6 @@ export module DiagnosticsProvider {
 					if (!parsedBody.error) {
 						let message = "Kleio translation started: " + path.basename(filePath);
 						vscode.window.showInformationMessage(message);
-						//console.log(parsedBody.result);
 					} else {
 						let message = "Error calling Kleio translation service: " + parsedBody.error.message;
 						vscode.window.showErrorMessage(message);
@@ -69,7 +72,7 @@ export module DiagnosticsProvider {
 		translateFile(file: string) {
 			if (file.includes("/sources/")) {
 				let tmp = file.split("/sources/");
-				let basePath = path.dirname(tmp[0]);
+				let basePath = tmp[0];
 				let cliPath = path.join("sources", tmp[1]);
 				this.loadAdminToken(basePath).then((token) => {
 					this.callTranslationService(cliPath, token);
