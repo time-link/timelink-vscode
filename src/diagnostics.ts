@@ -14,7 +14,7 @@ export module DiagnosticsProvider {
 
 	let diagnosticCollection = languages.createDiagnosticCollection("kleio");
 	let diagnostics: Diagnostic[] = [];
-
+	
 	export class Diagnostics {
 
 		constructor() { }
@@ -34,7 +34,6 @@ export module DiagnosticsProvider {
 
 		callTranslationService(filePath: string, token: string) {
 			var rp = require('request-promise');
-
 			var options = {
 				method: 'POST',
 				uri: 'http://localhost:8088/json/',
@@ -50,7 +49,6 @@ export module DiagnosticsProvider {
 				},
 				json: true
 			};
-
 			rp(options)
 				.then(function (parsedBody: any) {
 					if (!parsedBody.error) {
@@ -132,7 +130,6 @@ export module DiagnosticsProvider {
 		}
 
 		getDiagnosticsContent(cliDocumentUri: vscode.Uri, errorText: string, cliText: string) {
-			// diagnosticCollection.clear();
 			diagnostics = [];
 			const docLines = cliText.split(/\r?\n/);
 			errorText.split(/\r?\n/).forEach(element => {
@@ -140,10 +137,15 @@ export module DiagnosticsProvider {
 					const severity = (element.startsWith("ERROR:")) ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning;
 					const tmp = this.extractLineNumber(element);
 					if (tmp !== undefined) {
-						const line = Number(tmp);
-						const lineText = docLines[line - 1];
+						var line = Number(tmp);
+						var lineText = docLines[line - 1];
+						// Avoiding lines with empty spaces and putting the error on first line before.
+						while (line > 1 && lineText.trim().length === 0) {
+							line = line - 1;
+							lineText = docLines[line - 1];
+						}
 						const start = lineText.length - lineText.trimLeft().length;
-						this.setDiagnosticsContent(cliDocumentUri, element, severity, line, start, docLines[line].length); // rpt file returns on line more...
+						this.setDiagnosticsContent(cliDocumentUri, element, severity, line, start, docLines[line-1].length); // docLines starts at zero! 
 					}
 				}
 			});
