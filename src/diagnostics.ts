@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import { languages, Diagnostic, DiagnosticSeverity } from 'vscode';
 import { FileExplorer, Entry } from './fileExplorer';
 import * as path from 'path';
+import { print } from 'util';
 
 /*
 * Loads and displays errors from kleio rpt files
@@ -16,22 +17,19 @@ export module DiagnosticsProvider {
 
 	export class Diagnostics {
 
-		constructor() {}
+		constructor() { }
 
-		loadAdminToken(file: string) {
-			let tmp = file.split("/mhk-home/");
-			if (tmp.length > 1) {
-				let cliPath = tmp[1];
-				let propertiesPath = tmp[0] + "/mhk-home/system/conf/mhk_system.properties";
+		loadAdminToken(basePath: string): Promise<string> {
+			return new Promise<string>((resolve) => {
+				let propertiesPath = basePath + "/mhk-home/system/conf/mhk_system.properties";
 				vscode.workspace.openTextDocument(propertiesPath).then((document) => {
 					document.getText().split(/\r?\n/).forEach(element => {
 						if (element.startsWith("mhk.kleio.service.token.admin=")) {
-							let token = element.replace("mhk.kleio.service.token.admin=", "");
-							this.callTranslationService(cliPath, token);
+							resolve(element.replace("mhk.kleio.service.token.admin=", ""));
 						}
 					});
 				});
-			}
+			});
 		}
 
 		callTranslationService(filePath: string, token: string) {
@@ -41,22 +39,29 @@ export module DiagnosticsProvider {
 				method: 'POST',
 				uri: 'http://localhost:8088/json/',
 				body: {
-				  "jsonrpc": "2.0",
-				  "method": "translations_translate",
-				  "params": {
-					  "path": filePath, // e.g. "sources/demo_sources/soure/example3.cli", 
-					  "spawn":"no",
-					  "token": token // e.g. "29434098633feb3f8869a9ec9cdeb88cf8b0072f"
-				  },
-				  "id": 1987 // ???
+					"jsonrpc": "2.0",
+					"method": "translations_translate",
+					"params": {
+						"path": filePath, // e.g. "sources/demo_sources/soure/example3.cli", 
+						"spawn": "no",
+						"token": token // e.g. "29434098633feb3f8869a9ec9cdeb88cf8b0072f"
+					},
+					"id": 1987 // ???
 				},
 				json: true
 			};
 
 			rp(options)
 				.then(function (parsedBody: any) {
-					let message = "Kleio translation started: " + path.basename(filePath);
-					vscode.window.showInformationMessage(message);
+					if (!parsedBody.error) {
+						let message = "Kleio translation started: " + path.basename(filePath);
+						vscode.window.showInformationMessage(message);
+						//console.log(parsedBody.result);
+					} else {
+						let message = "Error calling Kleio translation service: " + parsedBody.error.message;
+						vscode.window.showErrorMessage(message);
+						console.log(parsedBody.error);
+					}
 				})
 				.catch(function (err: any) {
 					console.error("Couldn't connect to Kleio Server...");
@@ -64,17 +69,22 @@ export module DiagnosticsProvider {
 		}
 
 		translateFile(file: string) {
-			if (file.includes("/mhk-home/")) {
-				this.loadAdminToken(file);
-			} 
+			if (file.includes("/sources/")) {
+				let tmp = file.split("/sources/");
+				let basePath = path.dirname(tmp[0]);
+				let cliPath = path.join("sources", tmp[1]);
+				this.loadAdminToken(basePath).then((token) => {
+					this.callTranslationService(cliPath, token);
+				});
+			}
 		}
-		
+
 		loadErrorsForCli(filePath: string) {
 			const cliFile = filePath;
 			const errFile = filePath.replace(path.extname(filePath), ".rpt");
 			if (fs.existsSync(errFile)) {
 				var errorDocument = fs.readFileSync(errFile, 'utf8');
-				vscode.workspace.openTextDocument(cliFile).then((cliDocument) => {			
+				vscode.workspace.openTextDocument(cliFile).then((cliDocument) => {
 					this.getDiagnosticsContent(cliDocument.uri, errorDocument, cliDocument.getText());
 				});
 			}
@@ -130,10 +140,10 @@ export module DiagnosticsProvider {
 					const severity = (element.startsWith("ERROR:")) ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning;
 					const tmp = this.extractLineNumber(element);
 					if (tmp !== undefined) {
-						const line = Number(tmp) ;
+						const line = Number(tmp);
 						const lineText = docLines[line - 1];
 						const start = lineText.length - lineText.trimLeft().length;
-						this.setDiagnosticsContent(cliDocumentUri, element, severity, line,  start, docLines[line].length); // rpt file returns on line more...
+						this.setDiagnosticsContent(cliDocumentUri, element, severity, line, start, docLines[line].length); // rpt file returns on line more...
 					}
 				}
 			});
