@@ -22,16 +22,21 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>entity.name.type</string>
+					<string>entity.name.function</string>
 				</dict>
 				<key>2</key>
 				<dict>
 					<key>name</key>
 					<string>punctuation.separator</string>
 				</dict>
+				<key>3</key>
+				<dict>
+					<key>name</key>
+					<string>entity.name.function</string>
+				</dict>
 			</dict>
 			<key>match</key>
-			<string>^\s*([a-z][a-z0-9\.-]*)(\$)</string>
+			<string>^\s*([a-z][a-z0-9\.-]*)(\$)([A-z0-9 \.-]*)</string>
 		</dict>
 		<dict>
 			<key>match</key>
