@@ -2,7 +2,7 @@
    "name": "kleio",
    "displayName": "Time Link Bundle",
    "description": "Time Link is a web application that manages databases for micro-historical research.",
-   "version": "0.4.3",
+   "version": "0.9.0",
    "publisher": "timelink",
    "engines": {
       "vscode": "^1.38.0"
@@ -16,13 +16,22 @@
    ],
    "icon": "images/icon.png",
    "activationEvents": [
-      "onCommand:extension.helloWorld",
       "onLanguage:kleio",
-      "onView:fileExplorer",
-      "onView:statusProvider"
+      "onView:fileExplorer"
    ],
    "main": "./out/extension.js",
    "contributes": {
+      "menus": {
+         "view/item/context": [
+             {
+                 "command": "extension.translateFile",
+                 "when": "viewItem == fileCli"
+             },
+             {
+               "command": "revealFileInOS"
+           }
+         ]
+      },
       "languages": [
          {
             "id": "kleio",
@@ -44,8 +53,12 @@
       ],
       "commands": [
          {
-            "command": "extension.helloWorld",
-            "title": "Hello World"
+            "command": "extension.translateFile",
+            "title": "Translate File"
+         },
+         {
+            "command": "revealFileInOS",
+            "title": "Open Containing Folder"
          }
       ],
       "grammars": [
@@ -71,6 +84,12 @@
                "langId": "kleio",
                "name": "kleio"
             }
+         },
+         {
+            "key": "ctrl+alt+t",
+            "mac": "shift+cmd+t",
+            "command": "extension.translateFile",
+            "when": "editorTextFocus"
          }
       ],
       "viewsContainers": {
@@ -78,7 +97,7 @@
             {
                "id": "package-explorer",
                "title": "Time Link",
-               "icon": "images/icon.svg"
+               "icon": "images/icon_extension.png"
             }
          ]
       },
@@ -89,8 +108,20 @@
                "name": "Time Link File Explorer"
             },
             {
-               "id": "statusProvider",
-               "name": "Kleio Files Status"
+               "id": "translationNeededExplorer",
+               "name": "Translation needed"
+            },
+            {
+               "id": "fileWithErrorsExplorer",
+               "name": "With errors"
+            },
+            {
+               "id": "fileWithWarningsExplorer",
+               "name": "With warnings"
+            },
+            {
+               "id": "importReadyExplorer",
+               "name": "Ready for import"
             }
          ],
          "explorer": [
@@ -122,6 +153,7 @@
       "vscode-test": "^1.0.2"
    },
    "dependencies": {
+      "jayson": "^3.2.0",
       "request": "^2.88.0",
       "request-promise": "^4.2.4"
    }

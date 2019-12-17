@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { languages, Diagnostic, DiagnosticSeverity } from 'vscode';
 import * as path from 'path';
+import { KleioServiceModule } from './kleioService';
 
 /*
 * Loads and displays errors from kleio rpt files
@@ -9,10 +10,12 @@ import * as path from 'path';
 * More about on [Diagnostic](https://code.visualstudio.com/api/references/vscode-api#DiagnosticCollection)
 */
 export module DiagnosticsProvider {
-
+	
+	let kleioService = KleioServiceModule.KleioService.getInstance();
+	//let kleioService: KleioServiceModule.KleioService = new KleioServiceModule.KleioService();
 	let diagnosticCollection = languages.createDiagnosticCollection("kleio");
 	let diagnostics: Diagnostic[] = [];
-	
+
 	export class Diagnostics {
 
 		constructor() { }
@@ -20,62 +23,44 @@ export module DiagnosticsProvider {
 		/*
 		 * Returns Kleio admin token from mhk_system.properties
 		 */
-		loadAdminToken(basePath: string): Promise<string> {
+		/*loadAdminToken(): Promise<string> {
 			return new Promise<string>((resolve) => {
-				let propertiesPath = basePath + "/system/conf/mhk_system.properties";
-				vscode.workspace.openTextDocument(propertiesPath).then((document) => {
-					document.getText().split(/\r?\n/).forEach(element => {
-						if (element.startsWith("mhk.kleio.service.token.admin=")) {
-							resolve(element.replace("mhk.kleio.service.token.admin=", ""));
-						}
+				if (!vscode.workspace.workspaceFolders) {
+					console.log("No Workspace Folders open");
+					// throw new Error("No Workspace Folders open");
+					return;
+				}
+				const wsFolder = vscode.workspace.workspaceFolders[0];
+				let tmp = wsFolder.uri.fsPath.split("/sources/");
+				if (tmp.length > 1) {
+					let basePath = tmp[0];
+					let propertiesPath = basePath + "/system/conf/mhk_system.properties";
+					vscode.workspace.openTextDocument(propertiesPath).then((document) => {
+						document.getText().split(/\r?\n/).forEach(element => {
+							if (element.startsWith("mhk.kleio.service.token.admin=")) {
+								resolve(element.replace("mhk.kleio.service.token.admin=", ""));
+							}
+						});
 					});
-				});
+				}
 			});
-		}
-
-		/*
-		 * Calls Kleio Translation Service API with a POST request
-		 */
-		callTranslationService(filePath: string, token: string) {
-			var rp = require('request-promise');
-			var options = {
-				method: 'POST',
-				uri: 'http://localhost:8088/json/',
-				body: {
-					"jsonrpc": "2.0",
-					"method": "translations_translate",
-					"params": {
-						"path": filePath, // e.g. "sources/demo_sources/soure/example3.cli", 
-						"spawn": "no",
-						"token": token // e.g. "29434098633feb3f8869a9ec9cdeb88cf8b0072f"
-					},
-					"id": 1987 // ???
-				},
-				json: true
-			};
-			rp(options)
-				.then(function (parsedBody: any) {
-					if (!parsedBody.error) {
-						let message = "Kleio translation started: " + path.basename(filePath);
-						vscode.window.showInformationMessage(message);
-					} else {
-						let message = "Error calling Kleio translation service: " + parsedBody.error.message;
-						vscode.window.showErrorMessage(message);
-						console.log(parsedBody.error);
-					}
-				})
-				.catch(function (err: any) {
-					console.error("Couldn't connect to Kleio Server...");
-				});
-		}
+		}*/
 
 		translateFile(file: string) {
 			if (file.includes("/sources/")) {
 				let tmp = file.split("/sources/");
-				let basePath = tmp[0];
 				let cliPath = path.join("sources", tmp[1]);
-				this.loadAdminToken(basePath).then((token) => {
-					this.callTranslationService(cliPath, token);
+				kleioService.translationsTranslate(cliPath).then((response: any) => {
+					if (!response.error) {
+						let message = "Kleio translation started: " + path.basename(file);
+						vscode.window.showInformationMessage(message);
+					} else {
+						let message = "Error calling Kleio translation service: " + response.error.message;
+						vscode.window.showErrorMessage(message);
+						console.log(response.error);
+					}
+				}).catch(error => {
+					console.log(error);
 				});
 			}
 		}
@@ -148,8 +133,12 @@ export module DiagnosticsProvider {
 							lineText = docLines[line - 1];
 						}
 						const start = lineText.length - lineText.trimLeft().length;
-						this.setDiagnosticsContent(cliDocumentUri, element, severity, line, start, docLines[line-1].length); // docLines starts at zero! 
+						this.setDiagnosticsContent(cliDocumentUri, element, severity, line, start, docLines[line - 1].length); // docLines starts at zero! 
 					}
+				}
+				
+				if (diagnostics.length === 0) {
+					this.clearDiagnosticsContent(cliDocumentUri);
 				}
 			});
 		}
@@ -157,6 +146,10 @@ export module DiagnosticsProvider {
 		setDiagnosticsContent(documentUri: vscode.Uri, text: string, severity: vscode.DiagnosticSeverity, line: number, start: number, end: number) {
 			const range = new vscode.Range(new vscode.Position(line - 1, start), new vscode.Position(line - 1, end));
 			diagnostics.push(new Diagnostic(range, text, severity));
+			diagnosticCollection.set(documentUri, diagnostics);
+		}
+
+		clearDiagnosticsContent(documentUri: vscode.Uri) {
 			diagnosticCollection.set(documentUri, diagnostics);
 		}
 	}

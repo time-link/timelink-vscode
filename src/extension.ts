@@ -4,7 +4,6 @@ import * as vscode from 'vscode';
 
 import { HoverProvider } from "./hover";
 import { CompletionProvider } from "./completion";
-import { StatusProvider } from './statusProvider';
 import { DiagnosticsProvider } from './diagnostics';
 import { FileExplorer } from './fileExplorer';
 
@@ -14,6 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const hoverProvider: HoverProvider.HoverContent = new HoverProvider.HoverContent(context);
 	const completionProvider: CompletionProvider.Completion = new CompletionProvider.Completion();
 	const diagnosticsProvider: DiagnosticsProvider.Diagnostics = new DiagnosticsProvider.Diagnostics();
+	var fileExplorer:FileExplorer;
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
@@ -34,18 +34,14 @@ export function activate(context: vscode.ExtensionContext) {
 	// watch file system events: create and change rpt files
 	var watcher = vscode.workspace.createFileSystemWatcher("**/*.err"); // err file is written at the end only
 	watcher.onDidCreate(event => {
-		diagnosticsProvider.onDidCreateOrChange(event.path.replace(".err", ".rpt"));	
+		diagnosticsProvider.onDidCreateOrChange(event.path.replace(".err", ".rpt"));
+		fileExplorer.refresh();
 	});
 
 	watcher.onDidChange(event => {
-		diagnosticsProvider.onDidCreateOrChange(event.path.replace(".err", ".rpt"));	
+		diagnosticsProvider.onDidCreateOrChange(event.path.replace(".err", ".rpt"));
+		fileExplorer.refresh();
 	});
-
-	// Samples of `window.registerTreeDataProvider`
-	if (vscode.workspace.rootPath !== undefined) {
-		const statusProvider = new StatusProvider(vscode.workspace.rootPath);
-		vscode.window.registerTreeDataProvider('statusProvider', statusProvider);
-	}
 
 	// Registering to provide Hover Content
 	// Hover content is managed by hover.ts classes
@@ -61,14 +57,27 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.languages.registerCompletionItemProvider('kleio', {
 		provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext) {
 			const tokenText = document.getText(document.getWordRangeAtPosition(position));
-			console.log(tokenText);
+			//console.log(tokenText);
 			return completionProvider.getCompletionContent(tokenText);
 		}
 	});
 
+	// commands
+	let disposable = vscode.commands.registerCommand('extension.translateFile', (event) => {
+		if (event) {
+			// command called via right click
+			diagnosticsProvider.translateFile(event.uri.path);
+		} else if (vscode.window.activeTextEditor) {
+			// command called via key binding (keyboard shorcut)
+			diagnosticsProvider.translateFile(vscode.window.activeTextEditor.document.uri.path);
+		}
+	});
+	context.subscriptions.push(disposable);
+
 	// `window.createView`
-	new FileExplorer(context);
+	fileExplorer = new FileExplorer(context);
 }
 
 // this method is called when your extension is deactivated
 export function deactivate() { }
+

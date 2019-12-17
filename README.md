@@ -5,7 +5,7 @@ MHK Time Link is a web application that manages databases for micro-historical a
 This extension adds support for the Kleio notation in Visual Studio Code editor, including Syntax Highlighting and Snippet completion.
 
 ## Install Extension in Visual Studio Code (VS Code)
-1. Download VS Code extension from [repository](https://github.com/time-link/timelink-vscode/raw/master/builds/kleio-0.4.3.vsix)
+1. Download VS Code extension from [repository](https://github.com/time-link/timelink-vscode/raw/master/builds/kleio-0.9.0.vsix)
 2. Select extensions on VS Code left toolbar
 3. Click "More actions" (three dots) and select install from VSIX
 
@@ -75,9 +75,17 @@ Keybindings must be added manually to package.json file to 'keybindings' section
 
 ## Known Issues
 
-None so far!
+Not updating Kleio Server file status after initial app load. 
 
 ## Release Notes
+
+### 0.9.0
+Load and display file status from Kleio Server (when running locally).
+Start file translation by right click on .cli files (and with CMD/CTRL + SHIFT + T).
+Custom icon for .cli files.
+Add views showing files grouped by status (Translation Needed, With Errors, With Warnings, Ready for Import).
+Syntax highlighting now highlights the first token after the $ separator.
+Bug fixes and code cleanup.
 
 ### 0.4.2
 ### 0.4.1
