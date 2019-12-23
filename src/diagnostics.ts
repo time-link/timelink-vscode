@@ -47,22 +47,18 @@ export module DiagnosticsProvider {
 		}*/
 
 		translateFile(file: string) {
-			if (file.includes("/sources/")) {
-				let tmp = file.split("/sources/");
-				let cliPath = path.join("sources", tmp[1]);
-				kleioService.translationsTranslate(cliPath).then((response: any) => {
-					if (!response.error) {
-						let message = "Kleio translation started: " + path.basename(file);
-						vscode.window.showInformationMessage(message);
-					} else {
-						let message = "Error calling Kleio translation service: " + response.error.message;
-						vscode.window.showErrorMessage(message);
-						console.log(response.error);
-					}
-				}).catch(error => {
-					console.log(error);
-				});
-			}
+			kleioService.translationsTranslate(file).then((response: any) => {
+				if (!response.error) {
+					let message = "Kleio translation started: " + path.basename(file);
+					vscode.window.showInformationMessage(message);
+				} else {
+					let message = "Error calling Kleio translation service: " + response.error.message;
+					vscode.window.showErrorMessage(message);
+					console.log(response.error);
+				}
+			}).catch(error => {
+				console.log(error);
+			});
 		}
 
 		loadErrorsForCli(filePath: string) {

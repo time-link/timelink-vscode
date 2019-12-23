@@ -7,6 +7,8 @@ import * as jayson from 'jayson';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { print } from 'util';
+import { rejects } from 'assert';
 
 export module KleioServiceModule {
 
@@ -14,6 +16,7 @@ export module KleioServiceModule {
         private static instance: KleioService;
         
         private token?:string;
+        private mhkHome:string = "";
 
         private client = jayson.Client.http({
             host: 'localhost',
@@ -51,9 +54,9 @@ export module KleioServiceModule {
         loadAdminToken(): Promise<string> {
             return new Promise<string>((resolve) => {
 				if (vscode.workspace.workspaceFolders) {
-                    let mhkHome = this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
-                    if (mhkHome) {
-                        let propPath = path.join(mhkHome, "/system/conf/mhk_system.properties");
+                    this.mhkHome = this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
+                    if (this.mhkHome) {
+                        let propPath = path.join(this.mhkHome, "/system/conf/mhk_system.properties");
                         vscode.workspace.openTextDocument(propPath).then((document) => {
                             document.getText().split(/\r?\n/).forEach(element => {
                                 if (element.startsWith("mhk.kleio.service.token.admin=")) {
@@ -89,9 +92,12 @@ export module KleioServiceModule {
          * If path points to a directory translates files in the directory
          */
         translationsTranslate(filePath: string): Promise<any> {
+            if (!this.mhkHome || !filePath.includes(this.mhkHome)) {
+                throw new Error("File Path not in MHK Home");
+            }
             return new Promise<any>((resolve) => {
                 let params = {
-                    "path": filePath,
+                    "path": filePath.replace(this.mhkHome, ""),
                     "spawn": "no",
                     "token": this.token
                 };
