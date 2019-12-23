@@ -74,6 +74,11 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(disposable);
 
+	disposable = vscode.commands.registerCommand('extension.reloadTranslationInfo', (event) => {
+		fileExplorer.refresh();
+	});
+	context.subscriptions.push(disposable);
+
 	// `window.createView`
 	fileExplorer = new FileExplorer(context);
 }

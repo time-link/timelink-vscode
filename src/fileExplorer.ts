@@ -183,20 +183,23 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 		this._onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
 
 		this.kleioService.loadAdminToken().then(() => {
-			this.kleioService.translationsGet().then((response) => {
-				if (response.result) {
-					this.files = response.result;
-					console.log("refresh file explorer");
-					this.refresh();
-				}
-			});
+			this.loadTranslationInfo();
 		});
 	}
 
-	public refresh(): any {
-		// refreh only current node?
-		// https://github.com/Microsoft/vscode/issues/62798
-		this._onDidChangeTreeData.fire();
+	loadTranslationInfo () {
+		this.kleioService.translationsGet().then((response) => {
+			if (response.result) {
+				this.files = response.result;
+				this._onDidChangeTreeData.fire();
+			}
+		});
+	}
+	
+	// refreh only current node?
+	// https://github.com/Microsoft/vscode/issues/62798
+	public refresh(): any {	
+		this.loadTranslationInfo();
 	}
 
 	get onDidChangeFile(): vscode.Event<vscode.FileChangeEvent[]> {

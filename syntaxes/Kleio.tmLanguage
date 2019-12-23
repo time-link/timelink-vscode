@@ -22,7 +22,7 @@
 				<key>1</key>
 				<dict>
 					<key>name</key>
-					<string>entity.name.function</string>
+					<string>entity.name.type</string>
 				</dict>
 				<key>2</key>
 				<dict>

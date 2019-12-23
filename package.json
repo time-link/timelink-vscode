@@ -2,7 +2,7 @@
    "name": "kleio",
    "displayName": "Time Link Bundle",
    "description": "Time Link is a web application that manages databases for micro-historical research.",
-   "version": "0.9.0",
+   "version": "0.9.1",
    "publisher": "timelink",
    "engines": {
       "vscode": "^1.38.0"
@@ -22,6 +22,12 @@
    "main": "./out/extension.js",
    "contributes": {
       "menus": {
+         "view/title": [
+         {
+            "command": "extension.reloadTranslationInfo",
+            "group": "navigation",
+            "when": "view == fileExplorer || view == translationNeededExplorer || view == fileWithErrorsExplorer || view == fileWithWarningsExplorer || view == importReadyExplorer)"
+         }],
          "view/item/context": [
              {
                  "command": "extension.translateFile",
@@ -59,7 +65,15 @@
          {
             "command": "revealFileInOS",
             "title": "Open Containing Folder"
-         }
+         },
+         {
+            "command": "extension.reloadTranslationInfo",
+            "title": "Refresh",
+            "icon": {
+                "light": "resources/light/refresh.svg",
+                "dark": "resources/dark/refresh.svg"
+            }
+        }
       ],
       "grammars": [
          {
