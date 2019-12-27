@@ -88,16 +88,24 @@ export module KleioServiceModule {
         }
 
         /**
+         * Make sure path is in unix format with / as separator
+         */
+        pathToUnix(stringPath: string): string {
+            return stringPath.replace(/\\/g, "/");
+        }
+
+        /**
          * Start a translation.
          * If path points to a directory translates files in the directory
          */
         translationsTranslate(filePath: string): Promise<any> {
-            if (!this.mhkHome || !filePath.includes(this.mhkHome)) {
+            let filePathNormalized = path.normalize(filePath);
+            if (!this.mhkHome || !filePathNormalized.includes(this.mhkHome)) {
                 throw new Error("File Path not in MHK Home");
             }
             return new Promise<any>((resolve) => {
                 let params = {
-                    "path": filePath.replace(this.mhkHome, ""),
+                    "path": this.pathToUnix(filePathNormalized.replace(this.mhkHome, "")),
                     "spawn": "no",
                     "token": this.token
                 };
