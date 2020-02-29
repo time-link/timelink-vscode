@@ -164,10 +164,11 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 	readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
 
 	private status?: string;
-	
+
 	private files: any = [];
+	private dirStatus: string[] = []; // store fetched control folders
 	//private entries: [Entry] = [];
-	private entries: { [id: string] : vscode.TreeItem; } = {};
+	// private entries: { [id: string] : vscode.TreeItem; } = {};
 	private status_codes: { [id: string] : string } = { 
 		"E": "With errors", 
 		"V": "Ready for import", 
@@ -183,14 +184,20 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 		this._onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
 
 		this.kleioService.loadAdminToken().then(() => {
-			this.loadTranslationInfo();
+			this.loadTranslationInfo("");
 		});
 	}
 
-	loadTranslationInfo () {
-		this.kleioService.translationsGet().then((response) => {
+	loadTranslationInfo (path: string) {
+		if (path === "") {
+			// clear stored status array
+			this.files = [];
+		}
+		this.kleioService.translationsGet(path).then((response) => {
 			if (response.result) {
-				this.files = response.result;
+				this.files = this.files.concat(response.result);
+				// filter duplicated:
+				// this.files = this.files.concat(response.result.filter((item: any) => this.files.indexOf(item) < 0));
 				this._onDidChangeTreeData.fire();
 			}
 		});
@@ -199,7 +206,7 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 	// refreh only current node?
 	// https://github.com/Microsoft/vscode/issues/62798
 	public refresh(): any {	
-		this.loadTranslationInfo();
+		this.loadTranslationInfo("");
 	}
 
 	get onDidChangeFile(): vscode.Event<vscode.FileChangeEvent[]> {
@@ -314,12 +321,18 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 			var children2 = (await this.readDirectory(element.uri))
 					.filter(([name, type]) => !name.startsWith("."));
 
-			// testing filters....
+			// filters by status
 			children2 = children2.filter(([name, type]) => {
 				let uri = vscode.Uri.file(path.join(element.uri.fsPath, name));
 				let file = this.files.filter((el: { path: string; }) => uri.path.endsWith(el.path));
-				console.log(">" + name);
+				// console.log(">" + name);
 				if (type === vscode.FileType.Directory) {
+					console.log("READ DIR " + element.uri.fsPath);
+					// fetch translation info from kleio server for non feteched folders only
+					if (this.dirStatus.indexOf(element.uri.fsPath) < 0) {
+						this.dirStatus.push(element.uri.fsPath);
+						this.loadTranslationInfo (element.uri.fsPath);
+					}
 					return this;
 				} else if (file.length > 0 && file[0].status === this.status) {
 					// console.log("FOUND status " + file[0].status);
@@ -329,7 +342,6 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 				}
 			});
 			
-
 			children2.sort((a, b) => {
 				if (a[1] === b[1]) {
 					return a[0].localeCompare(b[0]);
@@ -402,7 +414,11 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 }
 
 export class FileExplorer {
-	private myTreeDataProvider: FileSystemProvider;
+	private fullTreeDataProvider: FileSystemProvider;
+	private translationNeededDataProvider: FileSystemProvider;
+	private importReadyDataProvider: FileSystemProvider;
+	private fileWithWarningsDataProvider: FileSystemProvider;
+	private fileWithErrorsDataProvider: FileSystemProvider;
 
 	private fileExplorer: vscode.TreeView<Entry>;
 	private translationNeededExplorer: vscode.TreeView<Entry>;
@@ -413,16 +429,20 @@ export class FileExplorer {
 
 	constructor(context: vscode.ExtensionContext) {
 
-		var treeDataProvider = new FileSystemProvider("T");		
+		var treeDataProvider = new FileSystemProvider("T");
+		this.translationNeededDataProvider = treeDataProvider;
 		this.translationNeededExplorer = vscode.window.createTreeView('translationNeededExplorer', { treeDataProvider });
 		
-		treeDataProvider = new FileSystemProvider("V");		
+		treeDataProvider = new FileSystemProvider("V");
+		this.importReadyDataProvider = treeDataProvider;
 		this.importReadyExplorer = vscode.window.createTreeView('importReadyExplorer', { treeDataProvider });
 		
-		treeDataProvider = new FileSystemProvider("W");		
+		treeDataProvider = new FileSystemProvider("W");
+		this.fileWithWarningsDataProvider = treeDataProvider;
 		this.fileWithWarningsExplorer = vscode.window.createTreeView('fileWithWarningsExplorer', { treeDataProvider });
 		
-		treeDataProvider = new FileSystemProvider("E");		
+		treeDataProvider = new FileSystemProvider("E");
+		this.fileWithErrorsDataProvider = treeDataProvider;
 		this.fileWithErrorsExplorer = vscode.window.createTreeView('fileWithErrorsExplorer', { treeDataProvider });
 		
 		//this.treeDataProvider = new FileSystemProvider("E");		
@@ -430,9 +450,8 @@ export class FileExplorer {
 
 		// all files
 		treeDataProvider = new FileSystemProvider();		
+		this.fullTreeDataProvider = treeDataProvider;
 		this.fileExplorer = vscode.window.createTreeView('fileExplorer', { treeDataProvider });
-		
-		this.myTreeDataProvider = treeDataProvider;
 
 		vscode.commands.registerCommand('fileExplorer.openFile', (resource) => this.openResource(resource));
 	}
@@ -442,6 +461,11 @@ export class FileExplorer {
 	}
 
 	public refresh(): void {
-		this.myTreeDataProvider.refresh();
+		// refresh all providers at once
+		this.fullTreeDataProvider.refresh();
+		this.translationNeededDataProvider.refresh();
+		this.importReadyDataProvider.refresh();
+		this.fileWithWarningsDataProvider.refresh();
+		this.fileWithErrorsDataProvider.refresh();
 	}
 }
