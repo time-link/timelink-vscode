@@ -7,8 +7,6 @@ import * as jayson from 'jayson';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { print } from 'util';
-import { rejects } from 'assert';
 
 export module KleioServiceModule {
 
@@ -73,11 +71,11 @@ export module KleioServiceModule {
         /**
          * Get a file. Obtains a link to download a file specified in the Path parameter
          */
-        translationsGet() {
+        translationsGet(path: string) {
             return new Promise<any>((resolve) => {
                 let params = {
-                    "path": "",
-                    "recurse": "yes",
+                    "path": this.relativePath(path),
+                    "recurse": "false",
                     "token": this.token
                 };
                 return this.client.request('translations_get', params, function (err: any, response: any) {
@@ -95,6 +93,13 @@ export module KleioServiceModule {
         }
 
         /**
+         * Returns relative path to MHK HOME
+         */
+        relativePath(stringPath: string): string {
+            return stringPath.replace(this.mhkHome, "");
+        }
+
+        /**
          * Start a translation.
          * If path points to a directory translates files in the directory
          */
@@ -105,7 +110,7 @@ export module KleioServiceModule {
             }
             return new Promise<any>((resolve) => {
                 let params = {
-                    "path": this.pathToUnix(filePathNormalized.replace(this.mhkHome, "")),
+                    "path": this.pathToUnix(this.relativePath(filePathNormalized)),
                     "spawn": "no",
                     "token": this.token
                 };
