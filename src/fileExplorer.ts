@@ -163,7 +163,7 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 	private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
 	readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
 
-	private status?: string;
+	private status?: string; // translation status flag
 
 	private files: any = [];
 	private dirStatus: string[] = []; // store fetched control folders
@@ -335,6 +335,7 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 					}
 					return this;
 				} else if (file.length > 0 && file[0].status === this.status) {
+					// filters files by Translation Status
 					// console.log("FOUND status " + file[0].status);
 					return this;
 				} else if (!this.status) {
@@ -342,37 +343,33 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 				}
 			});
 			
-			children2.sort((a, b) => {
-				if (a[1] === b[1]) {
-					return a[0].localeCompare(b[0]);
-				}
-				return a[1] === vscode.FileType.Directory ? -1 : 1;
-			});
+			children2 = this.sortByAlphabeticalOrder(children2);
 
 			return children2.map(([name, type]) => ({ uri: vscode.Uri.file(path.join(element.uri.fsPath, name)), type }));
 		}
 
 		// workspace root folders
 		if (vscode.workspace.workspaceFolders !== undefined) {
-
-
-
 			const workspaceFolder = vscode.workspace.workspaceFolders.filter(folder => folder.uri.scheme === 'file')[0];
 			var children = (await this.readDirectory(workspaceFolder.uri))
 					.filter(([name, type]) => !name.startsWith("."));
 
-			children = children.sort((a, b) => {
-				if (a[1] === b[1]) {
-					return a[0].localeCompare(b[0]);
-				}
-				return a[1] === vscode.FileType.Directory ? -1 : 1;
-			});
+			children = this.sortByAlphabeticalOrder(children);
 
 			return children.map(([name, type]) => ({
 				 	uri: vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, name)), type }));
 		}
 
 		return [];
+	}
+
+	sortByAlphabeticalOrder(children: [string, vscode.FileType][]) {
+		return children.sort((a, b) => {
+			if (a[1] === b[1]) {
+				return a[0].localeCompare(b[0]);
+			}
+			return a[1] === vscode.FileType.Directory ? -1 : 1;
+		});
 	}
 
 	getTreeItem(element: Entry): vscode.TreeItem {
