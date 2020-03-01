@@ -23,19 +23,20 @@
    "contributes": {
       "menus": {
          "view/title": [
-         {
-            "command": "extension.reloadTranslationInfo",
-            "group": "navigation",
-            "when": "view == fileExplorer || view == translationNeededExplorer || view == fileWithErrorsExplorer || view == fileWithWarningsExplorer || view == importReadyExplorer)"
-         }],
+            {
+               "command": "extension.reloadTranslationInfo",
+               "group": "navigation",
+               "when": "view == fileExplorer || view == translationNeededExplorer || view == fileWithErrorsExplorer || view == fileWithWarningsExplorer || view == importReadyExplorer)"
+            }
+         ],
          "view/item/context": [
-             {
-                 "command": "extension.translateFile",
-                 "when": "viewItem == fileCli"
-             },
-             {
+            {
+               "command": "extension.translateFile",
+               "when": "viewItem == fileCli"
+            },
+            {
                "command": "revealFileInOS"
-           }
+            }
          ]
       },
       "languages": [
@@ -70,10 +71,10 @@
             "command": "extension.reloadTranslationInfo",
             "title": "Refresh",
             "icon": {
-                "light": "resources/light/refresh.svg",
-                "dark": "resources/dark/refresh.svg"
+               "light": "resources/light/refresh.svg",
+               "dark": "resources/dark/refresh.svg"
             }
-        }
+         }
       ],
       "grammars": [
          {
@@ -143,7 +144,10 @@
       }
    },
    "scripts": {
-      "vscode:prepublish": "npm run compile",
+      "vscode:prepublish": "webpack --mode production",
+      "webpack": "webpack --mode development",
+      "webpack-dev": "webpack --mode development --watch",
+      "test-compile": "tsc -p ./",
       "compile": "tsc -p ./",
       "watch": "tsc -watch -p ./",
       "pretest": "npm run compile",
@@ -158,9 +162,12 @@
       "@types/vscode": "^1.38.0",
       "glob": "^7.1.4",
       "mocha": "^6.1.4",
+      "ts-loader": "^6.2.1",
       "tslint": "^5.12.1",
       "typescript": "^3.3.1",
-      "vscode-test": "^1.0.2"
+      "vscode-test": "^1.0.2",
+      "webpack": "^4.41.6",
+      "webpack-cli": "^3.3.11"
    },
    "dependencies": {
       "jayson": "^3.2.0",
