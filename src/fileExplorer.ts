@@ -151,25 +151,52 @@ export interface Entry {
 	type: vscode.FileType;
 }
 
+export class KleioEntry extends vscode.TreeItem {
+
+	constructor(
+		public readonly label: string,
+		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+		public uri: vscode.Uri,
+		public type: vscode.FileType,
+		public readonly command?: vscode.Command
+	) {
+		super(label, collapsibleState);
+
+		if (type === vscode.FileType.File) { // file
+			this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+			this.iconPath = {
+				light: path.join(__filename, '..', '..', 'resources', 'light', 'file.png'),
+				dark: path.join(__filename, '..', '..', 'resources', 'dark', 'file.png')
+			};
+			this.command = { command: 'fileExplorer.openKleioFile', title: "Open File", arguments: [uri], };
+		} else {
+			this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+		}
+	}
+
+	contextValue = 'fileCli';
+}
+
 //#endregion
 
-export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscode.FileSystemProvider {
-	private diagnosticsProvider: DiagnosticsProvider.Diagnostics = new DiagnosticsProvider.Diagnostics();
-	//private kleioService: KleioServiceModule.KleioService = new KleioServiceModule.KleioService();
-	private kleioService = KleioServiceModule.KleioService.getInstance();
 
-	private _onDidChangeFile: vscode.EventEmitter<vscode.FileChangeEvent[]>;
+export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscode.FileSystemProvider {
+	protected diagnosticsProvider: DiagnosticsProvider.Diagnostics = new DiagnosticsProvider.Diagnostics();
+	//private kleioService: KleioServiceModule.KleioService = new KleioServiceModule.KleioService();
+	protected kleioService = KleioServiceModule.KleioService.getInstance();
+
+	protected _onDidChangeFile: vscode.EventEmitter<vscode.FileChangeEvent[]>;
 	
-	private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
+	protected _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
 	readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
 
-	private status?: string; // translation status flag
+	protected status?: string; // translation status flag
 
-	private files: any = [];
-	private dirStatus: string[] = []; // store fetched control folders
+	protected files: any = [];
+	protected dirStatus: string[] = []; // store fetched control folders
 	//private entries: [Entry] = [];
 	// private entries: { [id: string] : vscode.TreeItem; } = {};
-	private status_codes: { [id: string] : string } = { 
+	protected status_codes: { [id: string] : string } = { 
 		"E": "With errors", 
 		"V": "Ready for import", 
 		"W": "With warnings",
@@ -327,7 +354,7 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 				let file = this.files.filter((el: { path: string; }) => uri.path.endsWith(el.path));
 				// console.log(">" + name);
 				if (type === vscode.FileType.Directory) {
-					console.log("READ DIR " + element.uri.fsPath);
+					// console.log("READ DIR " + element.uri.fsPath);
 					// fetch translation info from kleio server for non feteched folders only
 					if (this.dirStatus.indexOf(element.uri.fsPath) < 0) {
 						this.dirStatus.push(element.uri.fsPath);
@@ -410,45 +437,173 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 	}
 }
 
-export class FileExplorer {
-	private fullTreeDataProvider: FileSystemProvider;
-	private translationNeededDataProvider: FileSystemProvider;
-	private importReadyDataProvider: FileSystemProvider;
-	private fileWithWarningsDataProvider: FileSystemProvider;
-	private fileWithErrorsDataProvider: FileSystemProvider;
+export class KleioStatusProvider extends FileSystemProvider implements vscode.TreeDataProvider<KleioEntry>, vscode.FileSystemProvider {
+	
+	constructor(status?: string) {
+		super();
+		this.status = status;
+		this._onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
+	}
+	
+	childCount(uri: vscode.Uri): [string, vscode.FileType][] | Thenable<number> {
+		return this._childCount(uri);
+	}
 
-	private fileExplorer: vscode.TreeView<Entry>;
-	private translationNeededExplorer: vscode.TreeView<Entry>;
-	private importReadyExplorer: vscode.TreeView<Entry>;
-	private fileWithWarningsExplorer: vscode.TreeView<Entry>;
-	private fileWithErrorsExplorer: vscode.TreeView<Entry>;
-	//private fileWithImportErrorsExplorer: vscode.TreeView<Entry>;
+	async _childCount(uri: vscode.Uri): Promise<number> {
+		const children = await _.readdir(uri.fsPath);
+		return Promise.resolve(children.length);
+	}
+
+	async _readDirectory(uri: vscode.Uri): Promise<[string, vscode.FileType][]> {
+		const children = await _.readdir(uri.fsPath);
+
+		const result: [string, vscode.FileType][] = [];
+		for (let i = 0; i < children.length; i++) {
+			const child = children[i];
+			const stat = await this._stat(path.join(uri.fsPath, child));
+			if (stat.type ===  vscode.FileType.Directory || child.endsWith(".cli")) {
+				result.push([child, stat.type]);
+			}
+		}
+
+		return Promise.resolve(result);
+	}
+
+	async getChildren(element?: KleioEntry): Promise<KleioEntry[]> {
+		
+		// element children
+		if (element) {
+			var children2 = (await this.readDirectory(element.uri))
+					.filter(([name, type]) => !name.startsWith("."));
+
+			// filters by status
+			children2 = children2.filter(([name, type]) => {
+				let uri = vscode.Uri.file(path.join(element.uri.fsPath, name));
+				let file = this.files.filter((el: { path: string; }) => uri.path.endsWith(el.path));
+				// console.log(">" + name);
+				if (type === vscode.FileType.Directory) {
+					// console.log("READ DIR " + element.uri.fsPath);
+					// fetch translation info from kleio server for non feteched folders only
+					if (this.dirStatus.indexOf(element.uri.fsPath) < 0) {
+						this.dirStatus.push(element.uri.fsPath);
+						this.loadTranslationInfo (element.uri.fsPath);
+					}
+					return this;
+				} else if (file.length > 0 && file[0].status === this.status) {
+					// filters files by Translation Status
+					// console.log("FOUND status " + file[0].status);
+					return this;
+				} else if (!this.status) {
+					return this;
+				}
+			});
+			
+			children2 = this.sortByAlphabeticalOrder(children2);
+
+			//return children2.map(([name, type]) => ({ uri: vscode.Uri.file(path.join(element.uri.fsPath, name)), type }));
+			return children2.map(([name, type]) => (new KleioEntry(name, vscode.TreeItemCollapsibleState.Collapsed, vscode.Uri.file(path.join(element.uri.fsPath, name)), 
+			type
+				)));
+		}
+
+		// workspace root folders
+		if (vscode.workspace.workspaceFolders !== undefined) {
+			const workspaceFolder = vscode.workspace.workspaceFolders.filter(folder => folder.uri.scheme === 'file')[0];
+			var children = (await this.readDirectory(workspaceFolder.uri))
+					.filter(([name, type]) => !name.startsWith("."));
+
+			// filters by status
+			children = children.filter(([name, type]) => {
+				let uri = vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, name));
+				let file = this.files.filter((el: { path: string; }) => uri.path.endsWith(el.path));
+				// console.log(">" + name);
+				if (type === vscode.FileType.Directory) {
+					// console.log("READ DIR " + element.uri.fsPath);
+					// fetch translation info from kleio server for non feteched folders only
+					if (this.dirStatus.indexOf(workspaceFolder.uri.fsPath) < 0) {
+						this.dirStatus.push(workspaceFolder.uri.fsPath);
+						this.loadTranslationInfo (workspaceFolder.uri.fsPath);
+					}
+					return this;
+				} else if (file.length > 0 && file[0].status === this.status) {
+					// filters files by Translation Status
+					// console.log("FOUND status " + file[0].status);
+					return this;
+				} else if (!this.status) {
+					return this;
+				}
+			});
+
+			children = this.sortByAlphabeticalOrder(children);
+
+			return children.map(([name, type]) => (new KleioEntry(name, vscode.TreeItemCollapsibleState.Collapsed,
+					vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, name)),
+					type)));
+
+			//return children.map(([name, type]) => ({
+			//	 	uri: vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, name)), type }));
+		}
+
+		return [];
+	}
+
+	sortByAlphabeticalOrder(children: [string, vscode.FileType][]) {
+		return children.sort((a, b) => {
+			if (a[1] === b[1]) {
+				return a[0].localeCompare(b[0]);
+			}
+			return a[1] === vscode.FileType.Directory ? -1 : 1;
+		});
+	}
+
+	getTreeItem(element: KleioEntry): vscode.TreeItem {
+		return element;
+	}
+}
+export class KleioStatusExplorer {
+	private translationNeededDataProvider: KleioStatusProvider;
+	private fileWithWarningsDataProvider: KleioStatusProvider;
+	private fileWithErrorsDataProvider: KleioStatusProvider;
+	private importReadyDataProvider: KleioStatusProvider;
 
 	constructor(context: vscode.ExtensionContext) {
-
-		var treeDataProvider = new FileSystemProvider("T");
+		var treeDataProvider = new KleioStatusProvider("T");
 		this.translationNeededDataProvider = treeDataProvider;
-		this.translationNeededExplorer = vscode.window.createTreeView('translationNeededExplorer', { treeDataProvider });
-		
-		treeDataProvider = new FileSystemProvider("V");
-		this.importReadyDataProvider = treeDataProvider;
-		this.importReadyExplorer = vscode.window.createTreeView('importReadyExplorer', { treeDataProvider });
-		
-		treeDataProvider = new FileSystemProvider("W");
-		this.fileWithWarningsDataProvider = treeDataProvider;
-		this.fileWithWarningsExplorer = vscode.window.createTreeView('fileWithWarningsExplorer', { treeDataProvider });
-		
-		treeDataProvider = new FileSystemProvider("E");
-		this.fileWithErrorsDataProvider = treeDataProvider;
-		this.fileWithErrorsExplorer = vscode.window.createTreeView('fileWithErrorsExplorer', { treeDataProvider });
-		
-		//this.treeDataProvider = new FileSystemProvider("E");		
-		//this.fileWithImportErrorsExplorer = vscode.window.createTreeView('fileWithImportErrorsExplorer', { treeDataProvider });
+		vscode.window.createTreeView('translationNeededExplorer', { treeDataProvider });
 
-		// all files
-		treeDataProvider = new FileSystemProvider();		
+		treeDataProvider = new KleioStatusProvider("W");
+		this.fileWithWarningsDataProvider = treeDataProvider;
+		vscode.window.createTreeView('fileWithWarningsExplorer', { treeDataProvider });
+
+		treeDataProvider = new KleioStatusProvider("E");
+		this.fileWithErrorsDataProvider = treeDataProvider;
+		vscode.window.createTreeView('fileWithErrorsExplorer', { treeDataProvider });
+
+		treeDataProvider = new KleioStatusProvider("V");
+		this.importReadyDataProvider = treeDataProvider;
+		vscode.window.createTreeView('importReadyExplorer', { treeDataProvider });
+
+		vscode.commands.registerCommand('fileExplorer.openKleioFile', (resource) => this.openResource(resource));
+	}
+
+	private openResource(resource: vscode.Uri): void {
+		vscode.window.showTextDocument(resource);
+	}
+
+	public refresh(): void {
+		this.translationNeededDataProvider.refresh();
+		this.fileWithWarningsDataProvider.refresh();
+		this.importReadyDataProvider.refresh();
+	}
+}
+
+export class FileExplorer {
+	private fullTreeDataProvider: FileSystemProvider;
+
+	constructor(context: vscode.ExtensionContext) {
+		var treeDataProvider = new FileSystemProvider();		
 		this.fullTreeDataProvider = treeDataProvider;
-		this.fileExplorer = vscode.window.createTreeView('fileExplorer', { treeDataProvider });
+		vscode.window.createTreeView('fileExplorer', { treeDataProvider });
 
 		vscode.commands.registerCommand('fileExplorer.openFile', (resource) => this.openResource(resource));
 	}
@@ -458,11 +613,6 @@ export class FileExplorer {
 	}
 
 	public refresh(): void {
-		// refresh all providers at once
 		this.fullTreeDataProvider.refresh();
-		this.translationNeededDataProvider.refresh();
-		this.importReadyDataProvider.refresh();
-		this.fileWithWarningsDataProvider.refresh();
-		this.fileWithErrorsDataProvider.refresh();
 	}
 }

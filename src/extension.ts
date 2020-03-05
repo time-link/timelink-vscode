@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { HoverProvider } from "./hover";
 import { CompletionProvider } from "./completion";
 import { DiagnosticsProvider } from './diagnostics';
-import { FileExplorer } from './fileExplorer';
+import { FileExplorer, KleioStatusProvider, KleioStatusExplorer } from './fileExplorer';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -13,7 +13,9 @@ export function activate(context: vscode.ExtensionContext) {
 	const hoverProvider: HoverProvider.HoverContent = new HoverProvider.HoverContent(context);
 	const completionProvider: CompletionProvider.Completion = new CompletionProvider.Completion();
 	const diagnosticsProvider: DiagnosticsProvider.Diagnostics = new DiagnosticsProvider.Diagnostics();
+	
 	var fileExplorer:FileExplorer;
+	var kleioExplorer:KleioStatusExplorer;
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
@@ -36,11 +38,13 @@ export function activate(context: vscode.ExtensionContext) {
 	watcher.onDidCreate(event => {
 		diagnosticsProvider.onDidCreateOrChange(event.path.replace(".err", ".rpt"));
 		fileExplorer.refresh();
+		kleioExplorer.refresh();
 	});
 
 	watcher.onDidChange(event => {
 		diagnosticsProvider.onDidCreateOrChange(event.path.replace(".err", ".rpt"));
 		fileExplorer.refresh();
+		kleioExplorer.refresh();
 	});
 
 	// Registering to provide Hover Content
@@ -76,11 +80,13 @@ export function activate(context: vscode.ExtensionContext) {
 
 	disposable = vscode.commands.registerCommand('extension.reloadTranslationInfo', (event) => {
 		fileExplorer.refresh();
+		kleioExplorer.refresh();
 	});
 	context.subscriptions.push(disposable);
 
 	// `window.createView`
 	fileExplorer = new FileExplorer(context);
+	kleioExplorer = new KleioStatusExplorer(context);
 }
 
 // this method is called when your extension is deactivated
