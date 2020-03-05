@@ -593,6 +593,7 @@ export class KleioStatusExplorer {
 	public refresh(): void {
 		this.translationNeededDataProvider.refresh();
 		this.fileWithWarningsDataProvider.refresh();
+		this.fileWithErrorsDataProvider.refresh();
 		this.importReadyDataProvider.refresh();
 	}
 }
