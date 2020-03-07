@@ -75,7 +75,7 @@ export module KleioServiceModule {
             return new Promise<any>((resolve) => {
                 let params = {
                     "path": this.relativePath(path),
-                    "recurse": "false",
+                    "recurse": (path === ""),
                     "token": this.token
                 };
                 return this.client.request('translations_get', params, function (err: any, response: any) {

@@ -1,12 +1,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-//import * as mkdirp from 'mkdirp';
-//import * as rimraf from 'rimraf';
 import { DiagnosticsProvider } from './diagnostics';
 import { KleioServiceModule } from './kleioService';
-
-//#region Utilities
 
 namespace _ {
 
@@ -151,17 +147,59 @@ export interface Entry {
 	type: vscode.FileType;
 }
 
+export class KleioStatus {
+	private static instance: KleioStatus;
+	protected kleioService = KleioServiceModule.KleioService.getInstance();
+	protected files: any = [];
+	protected fetched: string[] = [];
+	static getInstance(): KleioStatus {
+		if (!KleioStatus.instance) {
+			KleioStatus.instance = new KleioStatus();
+		}
+		return KleioStatus.instance;
+	}
+	getFiles() {
+		return this.files;
+	}
+	getFetched() {
+		return this.fetched;
+	}
+	clear() {
+		this.files = [];
+		this.fetched = [];
+	}
+	loadTranslationInfo (path: string, caller: () => void) {
+		if (path === "") {
+			// clear stored status array
+			this.clear();
+		}
+		if (this.fetched.indexOf(path) < 0) {
+			console.log("Load Kleio Status: " + path);
+			this.kleioService.translationsGet(path).then((response) => {
+				if (response.result) {
+					//this.files = this.files.concat(response.result);
+					this.files = this.files.concat(response.result.filter((item: any) => this.files.indexOf(item) < 0));
+					this.fetched.push(path);
+					caller();
+				}
+			});
+		} else {
+			caller();
+		}
+	}
+}
+
 export class KleioEntry extends vscode.TreeItem {
 
 	constructor(
 		public readonly label: string,
-		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
 		public uri: vscode.Uri,
 		public type: vscode.FileType,
-		public readonly command?: vscode.Command
+		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+		public readonly command?: vscode.Command,
+		public count: Number = -1
 	) {
 		super(label, collapsibleState);
-
 		if (type === vscode.FileType.File) { // file
 			this.collapsibleState = vscode.TreeItemCollapsibleState.None;
 			this.iconPath = {
@@ -169,33 +207,26 @@ export class KleioEntry extends vscode.TreeItem {
 				dark: path.join(__filename, '..', '..', 'resources', 'dark', 'file.png')
 			};
 			this.command = { command: 'fileExplorer.openKleioFile', title: "Open File", arguments: [uri], };
-		} else {
-			this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
 		}
 	}
 
 	contextValue = 'fileCli';
 }
 
-//#endregion
-
-
 export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscode.FileSystemProvider {
+	protected kleioStatus: KleioStatus = KleioStatus.getInstance();
 	protected diagnosticsProvider: DiagnosticsProvider.Diagnostics = new DiagnosticsProvider.Diagnostics();
-	//private kleioService: KleioServiceModule.KleioService = new KleioServiceModule.KleioService();
 	protected kleioService = KleioServiceModule.KleioService.getInstance();
 
 	protected _onDidChangeFile: vscode.EventEmitter<vscode.FileChangeEvent[]>;
-	
 	protected _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
 	readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
 
 	protected status?: string; // translation status flag
 
-	protected files: any = [];
 	protected dirStatus: string[] = []; // store fetched control folders
-	//private entries: [Entry] = [];
-	// private entries: { [id: string] : vscode.TreeItem; } = {};
+	protected dirCount: { [id: string] : Number } = {};
+	
 	protected status_codes: { [id: string] : string } = { 
 		"E": "With errors", 
 		"V": "Ready for import", 
@@ -211,31 +242,26 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 		this._onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
 
 		this.kleioService.loadAdminToken().then(() => {
-			this.loadTranslationInfo("");
+			//this.loadTranslationInfo("");
 		});
 	}
 
-	loadTranslationInfo (path: string) {
-		if (path === "") {
-			// clear stored status array
-			this.files = [];
-		}
-		this.kleioService.translationsGet(path).then((response) => {
-			if (response.result) {
-				this.files = this.files.concat(response.result);
-				// filter duplicated:
-				// this.files = this.files.concat(response.result.filter((item: any) => this.files.indexOf(item) < 0));
-				this._onDidChangeTreeData.fire();
-			}
-		});
-	}
-	
 	// refreh only current node?
 	// https://github.com/Microsoft/vscode/issues/62798
 	public refresh(): any {	
-		this.loadTranslationInfo("");
+		// only currently expanded nodes
+		for (let i = 0; i < this.dirStatus.length; i++) {
+			const child = this.dirStatus[i];
+			this.kleioStatus.loadTranslationInfo(child, ()=>{
+				this._onDidChangeTreeData.fire();
+			});
+		}
 	}
 
+	public fire(): any {	
+		this._onDidChangeTreeData.fire();
+	}
+	
 	get onDidChangeFile(): vscode.Event<vscode.FileChangeEvent[]> {
 		return this._onDidChangeFile.event;
 	}
@@ -243,8 +269,6 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 	watch(uri: vscode.Uri, options: { recursive: boolean; excludes: string[]; }): vscode.Disposable {
 		const watcher = fs.watch(uri.fsPath, { recursive: options.recursive }, async (event: string, filename: string | Buffer) => {
 			const filepath = path.join(uri.fsPath, _.normalizeNFC(filename.toString()));
-
-			// TODO support excludes (using minimatch library?)
 
 			this._onDidChangeFile.fire([{
 				type: event === 'change' ? vscode.FileChangeType.Changed : await _.exists(filepath) ? vscode.FileChangeType.Created : vscode.FileChangeType.Deleted,
@@ -274,7 +298,9 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 		for (let i = 0; i < children.length; i++) {
 			const child = children[i];
 			const stat = await this._stat(path.join(uri.fsPath, child));
-			result.push([child, stat.type]);
+			if (!child.startsWith(".")) {
+				result.push([child, stat.type]);
+			}
 		}
 
 		return Promise.resolve(result);
@@ -340,30 +366,28 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 	}
 
 	// tree data provider
-
 	async getChildren(element?: Entry): Promise<Entry[]> {
-		
 		// element children
 		if (element) {
-			var children2 = (await this.readDirectory(element.uri))
-					.filter(([name, type]) => !name.startsWith("."));
+			var children2 = (await this.readDirectory(element.uri));
+
+			// get translation info from kleio server and reload folder
+			if (this.dirStatus.indexOf(element.uri.fsPath) < 0) {
+				this.dirStatus.push(element.uri.fsPath);
+				this.kleioStatus.loadTranslationInfo (element.uri.fsPath, () => {
+					this._onDidChangeTreeData.fire(element);
+				});
+			}
 
 			// filters by status
 			children2 = children2.filter(([name, type]) => {
 				let uri = vscode.Uri.file(path.join(element.uri.fsPath, name));
-				let file = this.files.filter((el: { path: string; }) => uri.path.endsWith(el.path));
-				// console.log(">" + name);
+				//let file = this.files.filter((el: { path: string; }) => uri.path.endsWith(el.path));
+				let file = this.kleioStatus.getFiles().filter((el: { path: string; }) => uri.path.endsWith(el.path));
 				if (type === vscode.FileType.Directory) {
-					// console.log("READ DIR " + element.uri.fsPath);
-					// fetch translation info from kleio server for non feteched folders only
-					if (this.dirStatus.indexOf(element.uri.fsPath) < 0) {
-						this.dirStatus.push(element.uri.fsPath);
-						this.loadTranslationInfo (element.uri.fsPath);
-					}
 					return this;
 				} else if (file.length > 0 && file[0].status === this.status) {
 					// filters files by Translation Status
-					// console.log("FOUND status " + file[0].status);
 					return this;
 				} else if (!this.status) {
 					return this;
@@ -378,8 +402,15 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 		// workspace root folders
 		if (vscode.workspace.workspaceFolders !== undefined) {
 			const workspaceFolder = vscode.workspace.workspaceFolders.filter(folder => folder.uri.scheme === 'file')[0];
-			var children = (await this.readDirectory(workspaceFolder.uri))
-					.filter(([name, type]) => !name.startsWith("."));
+			var children = (await this.readDirectory(workspaceFolder.uri));
+			
+			// get translation info from kleio server and reload folder
+			if (this.dirStatus.indexOf(workspaceFolder.uri.fsPath) < 0) {
+				this.dirStatus.push(workspaceFolder.uri.fsPath);
+				this.kleioStatus.loadTranslationInfo (workspaceFolder.uri.fsPath, () => {
+					this._onDidChangeTreeData.fire();
+				});
+			}
 
 			children = this.sortByAlphabeticalOrder(children);
 
@@ -401,30 +432,20 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 
 	getTreeItem(element: Entry): vscode.TreeItem {
 		const treeItem = new vscode.TreeItem(element.uri, element.type === vscode.FileType.Directory ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
-		
-		///?????
-		/*if (this.entries[element.uri.path]) {
-			console.log("Tree item exists!");
-		} else {
-			this.entries[element.uri.path] = treeItem;
-		}*/
-
 		if (element.type === vscode.FileType.File) {
 			treeItem.command = { command: 'fileExplorer.openFile', title: "Open File", arguments: [element.uri], };
 			treeItem.contextValue = 'file';
 
 			if (element.uri.path.endsWith(".cli")) {
 				treeItem.contextValue = "fileCli";
+
 				// get errors from rpt file
 				this.diagnosticsProvider.loadErrorsForCli(element.uri.path);
 
 				// get file status from kleio server
-				let file = this.files.filter((el: { path: string; }) => element.uri.path.endsWith(el.path));
+				let file = this.kleioStatus.getFiles().filter((el: { path: string; }) => element.uri.path.endsWith(el.path));
 				if (file.length > 0) {
 					treeItem.description = this.status_codes[file[0].status];
-
-					//treeItem.id = "";
-					//console.log(">>" + treeItem.id);
 					treeItem.iconPath = {
 						light: path.join(__filename, '..', '..', 'resources', 'light', 'file.png'),
 						dark: path.join(__filename, '..', '..', 'resources', 'dark', 'file.png')
@@ -437,14 +458,23 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 	}
 }
 
-export class KleioStatusProvider extends FileSystemProvider implements vscode.TreeDataProvider<KleioEntry>, vscode.FileSystemProvider {
+/*
+ * KleioStatusProvider is used in VSCode views by status (needs translation, with warnings, etc)
+ * Overrides some FileSystemProvider methods
+ */
+export class KleioStatusProvider extends FileSystemProvider implements  vscode.TreeDataProvider<KleioEntry>, vscode.FileSystemProvider {
+	protected collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
 	
 	constructor(status?: string) {
 		super();
 		this.status = status;
 		this._onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
+
+		if (vscode.workspace.getConfiguration("timelink").collapsibleStateExpanded) {
+			this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+		}
 	}
-	
+
 	childCount(uri: vscode.Uri): [string, vscode.FileType][] | Thenable<number> {
 		return this._childCount(uri);
 	}
@@ -461,7 +491,9 @@ export class KleioStatusProvider extends FileSystemProvider implements vscode.Tr
 		for (let i = 0; i < children.length; i++) {
 			const child = children[i];
 			const stat = await this._stat(path.join(uri.fsPath, child));
-			if (stat.type ===  vscode.FileType.Directory || child.endsWith(".cli")) {
+			if (!child.startsWith(".") 
+					&& stat.type ===  vscode.FileType.Directory 
+					|| child.endsWith(".cli")) {
 				result.push([child, stat.type]);
 			}
 		}
@@ -470,90 +502,70 @@ export class KleioStatusProvider extends FileSystemProvider implements vscode.Tr
 	}
 
 	async getChildren(element?: KleioEntry): Promise<KleioEntry[]> {
-		
-		// element children
+		// get element children
 		if (element) {
-			var children2 = (await this.readDirectory(element.uri))
-					.filter(([name, type]) => !name.startsWith("."));
+			var elementChildren = (await this.readDirectory(element.uri));
 
+			// fetch translation info from kleio server for non fetched folders only
+			if (this.dirStatus.indexOf(element.uri.fsPath) < 0) {
+				this.dirStatus.push(element.uri.fsPath);
+				this.kleioStatus.loadTranslationInfo (element.uri.fsPath, ()=>{
+					this._onDidChangeTreeData.fire(element);
+				});
+			}
+			
 			// filters by status
-			children2 = children2.filter(([name, type]) => {
+			elementChildren = elementChildren.filter(([name, type]) => {
 				let uri = vscode.Uri.file(path.join(element.uri.fsPath, name));
-				let file = this.files.filter((el: { path: string; }) => uri.path.endsWith(el.path));
+				let file = this.kleioStatus.getFiles().filter((el: { path: string; }) => uri.path.endsWith(el.path));
 				// console.log(">" + name);
+
 				if (type === vscode.FileType.Directory) {
-					// console.log("READ DIR " + element.uri.fsPath);
-					// fetch translation info from kleio server for non feteched folders only
-					if (this.dirStatus.indexOf(element.uri.fsPath) < 0) {
-						this.dirStatus.push(element.uri.fsPath);
-						this.loadTranslationInfo (element.uri.fsPath);
-					}
 					return this;
 				} else if (file.length > 0 && file[0].status === this.status) {
 					// filters files by Translation Status
-					// console.log("FOUND status " + file[0].status);
 					return this;
 				} else if (!this.status) {
 					return this;
 				}
 			});
-			
-			children2 = this.sortByAlphabeticalOrder(children2);
-
-			//return children2.map(([name, type]) => ({ uri: vscode.Uri.file(path.join(element.uri.fsPath, name)), type }));
-			return children2.map(([name, type]) => (new KleioEntry(name, vscode.TreeItemCollapsibleState.Collapsed, vscode.Uri.file(path.join(element.uri.fsPath, name)), 
-			type
-				)));
+			return elementChildren.map(([name, type]) => (new KleioEntry(name, vscode.Uri.file(path.join(element.uri.fsPath, name)), type, this.collapsibleState)));
 		}
 
-		// workspace root folders
-		if (vscode.workspace.workspaceFolders !== undefined) {
+		// get workspace root folders
+		if (vscode.workspace.workspaceFolders !== undefined) {			
 			const workspaceFolder = vscode.workspace.workspaceFolders.filter(folder => folder.uri.scheme === 'file')[0];
-			var children = (await this.readDirectory(workspaceFolder.uri))
-					.filter(([name, type]) => !name.startsWith("."));
+
+			var workspaceFolderChildren = (await this.readDirectory(workspaceFolder.uri));
+			
+			// fetch translation info from kleio server for non fetched folders only
+			if (this.dirStatus.indexOf(workspaceFolder.uri.fsPath) < 0) {
+				this.dirStatus.push(workspaceFolder.uri.fsPath);
+				this.kleioStatus.loadTranslationInfo (workspaceFolder.uri.fsPath, ()=>{
+					this._onDidChangeTreeData.fire();
+				});
+			}
 
 			// filters by status
-			children = children.filter(([name, type]) => {
+			workspaceFolderChildren = workspaceFolderChildren.filter(([name, type]) => {
 				let uri = vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, name));
-				let file = this.files.filter((el: { path: string; }) => uri.path.endsWith(el.path));
-				// console.log(">" + name);
+				let file = this.kleioStatus.getFiles().filter((el: { path: string; }) => uri.path.endsWith(el.path));
 				if (type === vscode.FileType.Directory) {
-					// console.log("READ DIR " + element.uri.fsPath);
-					// fetch translation info from kleio server for non feteched folders only
-					if (this.dirStatus.indexOf(workspaceFolder.uri.fsPath) < 0) {
-						this.dirStatus.push(workspaceFolder.uri.fsPath);
-						this.loadTranslationInfo (workspaceFolder.uri.fsPath);
-					}
 					return this;
 				} else if (file.length > 0 && file[0].status === this.status) {
-					// filters files by Translation Status
-					// console.log("FOUND status " + file[0].status);
 					return this;
 				} else if (!this.status) {
 					return this;
 				}
 			});
 
-			children = this.sortByAlphabeticalOrder(children);
+			workspaceFolderChildren = this.sortByAlphabeticalOrder(workspaceFolderChildren);
 
-			return children.map(([name, type]) => (new KleioEntry(name, vscode.TreeItemCollapsibleState.Collapsed,
-					vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, name)),
-					type)));
-
-			//return children.map(([name, type]) => ({
-			//	 	uri: vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, name)), type }));
+			return workspaceFolderChildren.map(([name, type]) => (new KleioEntry(name, 
+				vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, name)), type, this.collapsibleState)));
 		}
 
 		return [];
-	}
-
-	sortByAlphabeticalOrder(children: [string, vscode.FileType][]) {
-		return children.sort((a, b) => {
-			if (a[1] === b[1]) {
-				return a[0].localeCompare(b[0]);
-			}
-			return a[1] === vscode.FileType.Directory ? -1 : 1;
-		});
 	}
 
 	getTreeItem(element: KleioEntry): vscode.TreeItem {
@@ -591,6 +603,8 @@ export class KleioStatusExplorer {
 	}
 
 	public refresh(): void {
+		KleioStatus.getInstance().clear();
+		
 		this.translationNeededDataProvider.refresh();
 		this.fileWithWarningsDataProvider.refresh();
 		this.fileWithErrorsDataProvider.refresh();
