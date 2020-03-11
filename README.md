@@ -77,6 +77,11 @@ Keybindings must be added manually to package.json file to 'keybindings' section
 
 ## Release Notes
 
+### 0.9.8 (RC)
+Filter by status now loads status recursively for each folder at root.
+File diagnostics (error/warning) loaded all at once when folder is expanded.
+Show feedback when getting status from kleio server.
+
 ### 0.9.5
 Fixes the update of files when a file with error finishes translating
 
