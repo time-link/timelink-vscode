@@ -2,7 +2,7 @@
 
 MHK Time Link is a web application that manages databases for micro-historical and genealogical research. It allows source-oriented data input, using Manfred Thaller Kleio notation, record linking and network analysis. The development of MHK is coordinated by Joaquim Carvalho, of the University of Coimbra, Portugal.
 
-This extension adds support for the Kleio notation in Visual Studio Code editor, including Syntax Highlighting and Snippet completion.
+This extension adds support for the Kleio notation in Visual Studio Code editor, including Syntax Highlighting, Snippet completion and Kleio Files management (error/warning displaying, translation status filtering, etc).
 
 ## Install Extension in Visual Studio Code (VS Code)
 1. Download VS Code extension from [repository](https://github.com/time-link/timelink-vscode/raw/master/builds/kleio-0.9.8.vsix)
