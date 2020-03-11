@@ -78,10 +78,10 @@ Keybindings must be added manually to package.json file to 'keybindings' section
 ## Release Notes
 
 ### 0.9.5
-Fixes files update when file with error finishes transalation
+Fixes the update of files when a file with error finishes translating
 
 ### 0.9.4
-Changes filter by kleio status views.
+Changes on filter by kleio status views.
 
 ### 0.9.3
 Fixes files update when translation status changes or user requests a refresh
