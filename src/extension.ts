@@ -22,13 +22,13 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "kleio" is now active!');
 
 	vscode.workspace.onWillSaveTextDocument(event => {
-		if (event.document.fileName.endsWith(".cli")) {
+		if (event.document.fileName.toLowerCase().endsWith(".cli")) {
 			diagnosticsProvider.translateFile(event.document.fileName);
 		}
 	});
 
 	vscode.workspace.onDidOpenTextDocument(document => {
-		if (document.fileName.endsWith(".cli")) {
+		if (document.fileName.toLowerCase().endsWith(".cli")) {
 			diagnosticsProvider.onDidOpenTextDocument(document);
 		}
 	});

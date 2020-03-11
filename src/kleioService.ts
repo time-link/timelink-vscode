@@ -71,13 +71,16 @@ export module KleioServiceModule {
         /**
          * Get a file. Obtains a link to download a file specified in the Path parameter
          */
-        translationsGet(path: string) {
+        translationsGet(path: string, status: string) {
             return new Promise<any>((resolve) => {
-                let params = {
+                let params = <any>{
                     "path": this.relativePath(path),
-                    "recurse": (path === ""),
+                    "recurse": true,
                     "token": this.token
                 };
+                if (status !== "") {
+                    params.status = status;
+                }
                 return this.client.request('translations_get', params, function (err: any, response: any) {
                     if (err) { throw err; }
                     resolve(response);
