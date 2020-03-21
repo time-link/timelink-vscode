@@ -318,6 +318,8 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 	protected _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
 	readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
 
+	protected showAllFilesExplorer = false;
+
 	protected status?: string; // translation status flag
 	protected dirStatus: string[] = []; // store fetched control folders
 	protected dirCount: { [id: string] : Number } = {};
@@ -336,6 +338,8 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 		this.status = status;
 		this._onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
 
+		this.showAllFilesExplorer = vscode.workspace.getConfiguration("timelink").showAllFilesInExplorer;
+		
 		this.kleioService.loadAdminToken().then(() => {
 			//this.kleioStatus.loadTranslationInfo("", ()=>{
 				// this._onDidChangeTreeData.fire();
@@ -396,12 +400,11 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 			const child = children[i];
 			const stat = await this._stat(path.join(uri.fsPath, child));
 			if (!child.startsWith(".")) {
-				result.push([child, stat.type]);
 				if (stat.type ===  vscode.FileType.Directory) {
 					result.push([child, stat.type]);
 				} else {
-					// only add kleio files?
-					if (this.isKleioFile(child)) {
+					// only add kleio files if show all files disabled
+					if (this.showAllFilesExplorer || this.isKleioFile(child)) {
 						result.push([child, stat.type]);
 					}
 				}

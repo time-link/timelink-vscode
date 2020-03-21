@@ -25,11 +25,16 @@
          "type": "object",
          "title": "Time Link",
          "properties": {
-           "timelink.collapsibleStateExpanded": {
+           "timelink.showAllFilesInExplorer": {
              "type": "boolean",
              "default": false,
-             "description": "Launch Status Tree Views Expanded."
-           }
+             "description": "Show all files in Time Link Explorer."
+           },
+           "timelink.collapsibleStateExpanded": {
+            "type": "boolean",
+            "default": false,
+            "description": "Launch Status Tree Views Expanded."
+          }
          }
       },
       "menus": {
