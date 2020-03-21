@@ -214,8 +214,8 @@ export class KleioStatus {
 			}
 			this.fetched.push(fpath);
 			caller();
+			this.placeHolderMessage = "0 files";
 			console.log("LOADED status for " + status);
-		
 		});
 	}
 	
@@ -230,12 +230,21 @@ export class KleioStatus {
 					location: vscode.ProgressLocation.Window,
 					title: this.placeHolderMessage
 				},
-				async (progress) => {	
-					await this._loadTranslationInfoStatus(fpath, status, caller);
-					this.placeHolderMessage = "No files returned from Kleio Server…";
+				async () => {	
+					await this._loadTranslationInfoStatus(fpath, status, caller).then(undefined, err => {
+						this.handleServerError(err);
+					});
 				});
 		} else {
 			caller();
+		}
+	}
+
+	handleServerError(err: { code: string; }) {
+		if (err.code === 'ECONNREFUSED') {
+			this.placeHolderMessage = "Connection refused by Kleio Server.";
+		} else {
+			this.placeHolderMessage = "Kleio Server error.";
 		}
 	}
 
@@ -248,12 +257,14 @@ export class KleioStatus {
 		}
 		if (this.fetched.indexOf(fpath) < 0) {
 			this.kleioService.translationsGet(fpath, "").then((response) => {
-				if (response.result) {
+				if (response && response.result) {
 					this.files = this.files.concat(response.result.filter((item: any) => this.files.indexOf(item) < 0));
 					//this.files = this.files.concat(response.result);
 					this.fetched.push(fpath);
 					caller();
 				}
+			}).then(undefined, err => {
+				this.handleServerError(err);
 			});
 		} else {
 			caller();
@@ -287,12 +298,14 @@ export class PlaceholderEntry extends KleioEntry {
 	constructor(
 		public readonly label: string
 	) {
-		super(label, vscode.Uri.file("dummy_file"), vscode.FileType.Unknown, vscode.TreeItemCollapsibleState.None)
+		super(label, vscode.Uri.file("dummy_file"), vscode.FileType.Unknown, vscode.TreeItemCollapsibleState.None);
 		this.contextValue = 'PlaceholderEntry';
-		this.iconPath = {
-			light: path.join(__filename, '..', '..', 'resources', 'light', 'warning.png'),
-			dark: path.join(__filename, '..', '..', 'resources', 'dark', 'warning.png')
-		};
+		if (label !== '0 files') {
+			this.iconPath = {
+				light: path.join(__filename, '..', '..', 'resources', 'light', 'warning.png'),
+				dark: path.join(__filename, '..', '..', 'resources', 'dark', 'warning.png')
+			};
+		}
 	}
 }
 
@@ -384,6 +397,14 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 			const stat = await this._stat(path.join(uri.fsPath, child));
 			if (!child.startsWith(".")) {
 				result.push([child, stat.type]);
+				if (stat.type ===  vscode.FileType.Directory) {
+					result.push([child, stat.type]);
+				} else {
+					// only add kleio files?
+					if (this.isKleioFile(child)) {
+						result.push([child, stat.type]);
+					}
+				}
 			}
 		}
 
@@ -512,12 +533,16 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 		});
 	}
 
+	isKleioFile(text: string) {
+		return /(\.cli|\.CLI|\.kleio|\.KLEIO)$/.test(text);
+	}
+
 	getTreeItem(element: Entry): vscode.TreeItem {
 		const treeItem = new vscode.TreeItem(element.uri, element.type === vscode.FileType.Directory ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
 		if (element.type === vscode.FileType.File) {
 			treeItem.command = { command: 'fileExplorer.openFile', title: "Open File", arguments: [element.uri], };
 			treeItem.contextValue = 'file';
-			if (element.uri.path.toLowerCase().endsWith(".cli")) {
+			if(this.isKleioFile(element.uri.path)) {
 				treeItem.contextValue = "fileCli";
 				// get errors from rpt file
 				this.diagnosticsProvider.loadErrorsForCli(element.uri.path);
@@ -563,7 +588,7 @@ export class KleioStatusProvider extends FileSystemProvider implements  vscode.T
 	}
 
 	public refresh(): any {	
-		this.kleioStatus.loadTranslationInfoStatus("/", this.status!, ()=>{
+		this.kleioStatus.loadTranslationInfoStatus("/", this.status!, ()=> {
 			this._onDidChangeTreeData.fire();
 		});
 	}
@@ -582,7 +607,7 @@ export class KleioStatusProvider extends FileSystemProvider implements  vscode.T
 						result.push([child, stat.type]);
 					}
 				} else {
-					if (child.toLowerCase().endsWith(".cli")) {
+					if (this.isKleioFile(child)) {
 						result.push([child, stat.type]);
 					}
 				}
@@ -592,9 +617,6 @@ export class KleioStatusProvider extends FileSystemProvider implements  vscode.T
 	}
 
 	async getChildren(element?: KleioEntry): Promise<KleioEntry[]> {
-		if (this.status === "T") {
-			console.log("hey");
-		}
 		// get element children
 		if (element) {
 			var elementChildren = (await this.readDirectory(element.uri));
