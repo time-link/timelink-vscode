@@ -33,7 +33,8 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	// watch file system events: create and change rpt files
+	// watch file system events to detect translation changes:
+	// translation ends with a newly created .err file
 	var watcher = vscode.workspace.createFileSystemWatcher("**/*.err"); // err file is written at the end only
 	watcher.onDidCreate(event => {
 		diagnosticsProvider.onDidCreateOrChange(event.path.replace(".err", ".rpt"));
@@ -41,6 +42,7 @@ export function activate(context: vscode.ExtensionContext) {
 		kleioExplorer.refresh();
 	});
 
+	// same as above but for changes
 	watcher.onDidChange(event => {
 		diagnosticsProvider.onDidCreateOrChange(event.path.replace(".err", ".rpt"));
 		fileExplorer.refresh();

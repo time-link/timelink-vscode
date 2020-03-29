@@ -153,7 +153,7 @@ export class KleioStatus {
 	protected files: any = [];
 	protected fetched: string[] = [];
 	protected cachedDirs: { [status: string]: [string]; } = {};
-	protected placeHolderMessage: string = "";
+	protected placeHolderMessage: string = "0 files";
 
 	static getInstance(): KleioStatus {
 		if (!KleioStatus.instance) {
@@ -214,7 +214,6 @@ export class KleioStatus {
 			}
 			this.fetched.push(fpath);
 			caller();
-			this.placeHolderMessage = "0 files";
 			console.log("LOADED status for " + status);
 		});
 	}

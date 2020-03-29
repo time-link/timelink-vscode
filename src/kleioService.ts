@@ -50,6 +50,7 @@ export module KleioServiceModule {
          * Loads Kleio Server admin token from mhk-home
          */
         loadAdminToken(): Promise<string> {
+            console.log('Loading admin token');
             return new Promise<string>((resolve) => {
 				if (vscode.workspace.workspaceFolders) {
                     this.mhkHome = this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
