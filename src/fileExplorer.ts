@@ -195,6 +195,7 @@ export class KleioStatus {
 				return;
 			}
 			this.files = this.files.concat(response.result.filter((item: any) => this.files.indexOf(item) < 0));
+			// requested results filtered by status
 			if (status !== "") {
 				response.result.forEach((element: any) => {
 					// add folder to dirs list
@@ -212,6 +213,8 @@ export class KleioStatus {
 					}
 				});
 			}
+			console.log(this.files.length);
+			this.placeHolderMessage = "0 files"; // default message when result is empty
 			this.fetched.push(fpath);
 			caller();
 			console.log("LOADED status for " + status);
@@ -232,6 +235,7 @@ export class KleioStatus {
 				async () => {	
 					await this._loadTranslationInfoStatus(fpath, status, caller).then(undefined, err => {
 						this.handleServerError(err);
+						caller();
 					});
 				});
 		} else {
@@ -264,6 +268,7 @@ export class KleioStatus {
 				}
 			}).then(undefined, err => {
 				this.handleServerError(err);
+				caller();
 			});
 		} else {
 			caller();
@@ -589,7 +594,7 @@ export class KleioStatusProvider extends FileSystemProvider implements  vscode.T
 		});
 	}
 
-	public refresh(): any {	
+	public refresh(): any {
 		this.kleioStatus.loadTranslationInfoStatus("/", this.status!, ()=> {
 			this._onDidChangeTreeData.fire();
 		});
