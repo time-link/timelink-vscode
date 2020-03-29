@@ -44,6 +44,14 @@ user@timelink-vscode:~$ vsce package
 user@timelink-vscode:~$ code --install-extension kleio-x.x.vsix
 ```
 
+Publish to Marketplace Visualstudio:
+
+```console
+foo@bar:~$ cd timelink-vscode
+foo@bar:~$ vsce publish
+```
+More info at https://code.visualstudio.com/api/working-with-extensions/publishing-extension
+
 #### Convert TextMate bundle features using [Yeoman](https://yeoman.io/learning/) code extension generator:
 
 ```console
