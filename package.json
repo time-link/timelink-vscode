@@ -25,16 +25,16 @@
          "type": "object",
          "title": "Time Link",
          "properties": {
-           "timelink.showAllFilesInExplorer": {
-             "type": "boolean",
-             "default": false,
-             "description": "Show all files in Time Link Explorer."
-           },
-           "timelink.collapsibleStateExpanded": {
-            "type": "boolean",
-            "default": false,
-            "description": "Launch Status Tree Views Expanded."
-          }
+            "timelink.showAllFilesInExplorer": {
+               "type": "boolean",
+               "default": false,
+               "description": "Show all files in Time Link Explorer."
+            },
+            "timelink.collapsibleStateExpanded": {
+               "type": "boolean",
+               "default": false,
+               "description": "Launch Status Tree Views Expanded."
+            }
          }
       },
       "menus": {
@@ -182,7 +182,7 @@
       "tslint": "^5.12.1",
       "typescript": "^3.3.1",
       "vscode-test": "^1.0.2",
-      "webpack": "^4.41.6",
+      "webpack": "^4.42.1",
       "webpack-cli": "^3.3.11"
    },
    "dependencies": {
