@@ -150,7 +150,7 @@ export interface Entry {
 export class KleioStatus {
 	private static instance: KleioStatus;
 	protected kleioService = KleioServiceModule.KleioService.getInstance();
-	protected files: any = [];
+	protected files: any = []; // store all kleio files
 	protected fetched: string[] = [];
 	protected cachedDirs: { [status: string]: [string]; } = {};
 	protected placeHolderMessage: string = "0 files";
@@ -162,12 +162,23 @@ export class KleioStatus {
 		return KleioStatus.instance;
 	}
 
+	constructor() {
+		this.clear();
+	}
+	
 	getFiles() {
 		return this.files;
 	}
 
 	getFetched() {
 		return this.fetched;
+	}
+
+	removeFromFetched(fspath: string) {
+		var index = this.fetched.indexOf(fspath);
+		if (index >= 0) {
+			this.fetched.splice(index, 1);
+		}
 	}
 
 	getCachedDirs() {
@@ -188,52 +199,68 @@ export class KleioStatus {
 	 * Loads Translation Status from Kleio Server
 	 * and caches directories that contains files in each status (E,T,etc)
 	 */
-	async _loadTranslationInfoStatus(fpath: string, status: string, caller: () => void) {
-		await this.kleioService.translationsGet(fpath, status).then((response) => {
-			console.log("Got Kleio Status: " + fpath + " for: " + status);
+	async _loadTranslationInfoStatus(fpath: string, caller: () => void) {
+		await this.kleioService.translationsGet(fpath).then((response) => {
+			console.log("Got Kleio Status: " + fpath);
 			if (!response.result) {
+				this.placeHolderMessage = "Kleio Server error.";
+				caller();
+				console.error(response);
 				return;
 			}
-			this.files = this.files.concat(response.result.filter((item: any) => this.files.indexOf(item) < 0));
-			// requested results filtered by status
-			if (status !== "") {
-				response.result.forEach((element: any) => {
-					// add folder to dirs list
-					if (this.cachedDirs[status].indexOf("/".concat(element.directory)) < 0) {
-						this.cachedDirs[status].push("/".concat(element.directory));
+
+			// store in all files array
+			// this.files = this.files.concat(response.result.filter((item: any) => this.files.indexOf(item) < 0));
+			// this.files = this.files.concat(response.result.filter((item: { source_url: string; }) => this.files.findIndex((p: { source_url: string; }) => p.source_url === item.source_url) < 0));
+
+			// store files status in cache
+			// including all parent folders
+			response.result.forEach((element: any) => {
+				// remove existing values
+				// usefull in case of partial request update
+				var oldElementIndex = this.files.findIndex((item: { source_url: string; }) => item.source_url === element.source_url);
+				if (oldElementIndex >= 0) {
+					this.files.splice(oldElementIndex, 1);
+				}
+				this.files.push(element);
+
+				// store status for each dir that contains at leat one element
+				var status = element.status;
+				if (!this.cachedDirs[status]) {
+					this.cachedDirs[status] = [""];
+				}
+				// add element current folder to dirs list
+				if (this.cachedDirs[status].indexOf("/".concat(element.directory)) < 0) {
+					this.cachedDirs[status].push("/".concat(element.directory));
+				}
+				// add all parent folders to dirs list
+				let comps = path.dirname(element.directory).split(path.sep);
+				while (comps.length > 0) {
+					let subPath = "/".concat(comps.join(path.sep));
+					if (this.cachedDirs[status].indexOf(subPath) < 0) {
+						this.cachedDirs[status].push(subPath);
 					}
-					// add all parent folders to dirs list
-					let comps = path.dirname(element.directory).split(path.sep);
-					while (comps.length > 0) {
-						let subPath = "/".concat(comps.join(path.sep));
-						if (this.cachedDirs[status].indexOf(subPath) < 0) {
-							this.cachedDirs[status].push(subPath);
-						}
-						comps.pop();
-					}
-				});
-			}
+					comps.pop();
+				}
+			});
 			console.log(this.files.length);
-			this.placeHolderMessage = "0 files"; // default message when result is empty
+			this.placeHolderMessage = "0 files"; // set default message for when result is empty
 			this.fetched.push(fpath);
 			caller();
-			console.log("LOADED status for " + status);
+			console.log("LOADED status");
 		});
 	}
 	
-	loadTranslationInfoStatus(fpath: string, status: string, caller: () => void) {
+	loadTranslationInfoStatus(fpath: string, caller: () => void) {
 		if (this.fetched.indexOf(fpath) < 0) {
-			console.log("Load Kleio Status: " + fpath + " for: " + status);
-			if (!this.cachedDirs[status]) {
-				this.cachedDirs[status] = [""];
-			}
+			console.log("Load Kleio Status: " + fpath );
 			this.placeHolderMessage = "Loading Status from Kleio Server…";
 			vscode.window.withProgress({
 					location: vscode.ProgressLocation.Window,
 					title: this.placeHolderMessage
 				},
 				async () => {	
-					await this._loadTranslationInfoStatus(fpath, status, caller).then(undefined, err => {
+					await this._loadTranslationInfoStatus(fpath, caller).then(undefined, err => {
 						this.handleServerError(err);
 						caller();
 					});
@@ -244,6 +271,7 @@ export class KleioStatus {
 	}
 
 	handleServerError(err: { code: string; }) {
+		console.error(err);
 		if (err.code === 'ECONNREFUSED') {
 			this.placeHolderMessage = "Connection refused by Kleio Server.";
 		} else {
@@ -255,11 +283,12 @@ export class KleioStatus {
 	 * Loads Translation Info from Kleio Server
 	 */
 	loadTranslationInfo(fpath: string, caller: () => void) {
+		console.log("Load Kleio Info: " + fpath );
 		if (fpath === "") {
 			this.clear();
 		}
 		if (this.fetched.indexOf(fpath) < 0) {
-			this.kleioService.translationsGet(fpath, "").then((response) => {
+			this.kleioService.translationsGet(fpath).then((response) => {
 				if (response && response.result) {
 					this.files = this.files.concat(response.result.filter((item: any) => this.files.indexOf(item) < 0));
 					//this.files = this.files.concat(response.result);
@@ -343,24 +372,18 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 		this._onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
 
 		this.showAllFilesExplorer = vscode.workspace.getConfiguration("timelink").showAllFilesInExplorer;
-		
-		this.kleioService.loadAdminToken().then(() => {
-			//this.kleioStatus.loadTranslationInfo("", ()=>{
-				// this._onDidChangeTreeData.fire();
-			//});
-		});
 	}
 
 	// refreh only current node?
 	// https://github.com/Microsoft/vscode/issues/62798
 	public refresh(): any {	
 		// only currently expanded nodes
-		for (let i = 0; i < this.dirStatus.length; i++) {
+		/*for (let i = 0; i < this.dirStatus.length; i++) {
 			const child = this.dirStatus[i];
 			this.kleioStatus.loadTranslationInfo(child, ()=>{
 				this._onDidChangeTreeData.fire();
 			});
-		}
+		}*/
 	}
 
 	public fire(): any {	
@@ -489,9 +512,9 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 				let file = this.kleioStatus.getFiles().filter((el: { path: string; }) => uri.path.endsWith(el.path));
 				if (type === vscode.FileType.Directory) {
 					return this;
-				} else if (file.length > 0 && file[0].status === this.status) {
+				//} else if (file.length > 0 && file[0].status === this.status) {
 					// filtering files by Translation Status
-					return this;
+				//	return this;
 				} else if (!this.status) {
 					// return everything
 					return this;
@@ -508,7 +531,7 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 			const workspaceFolder = vscode.workspace.workspaceFolders.filter(folder => folder.uri.scheme === 'file')[0];
 			var children = (await this.readDirectory(workspaceFolder.uri));
 			
-			children = children.filter(([name, type]) => {
+			/*children = children.filter(([name, type]) => {
 				if (type === vscode.FileType.Directory) {
 					let uri = path.join(workspaceFolder.uri.fsPath, name);
 					// get translation info from kleio server and reload folder
@@ -520,7 +543,7 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 					}
 				}
 				return this;
-			});
+			});*/
 
 			children = this.sortByAlphabeticalOrder(children);
 
@@ -582,22 +605,17 @@ export class KleioStatusProvider extends FileSystemProvider implements  vscode.T
 	
 	constructor(status?: string) {
 		super();
+
 		this.status = status;
 		this._onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
 
 		if (vscode.workspace.getConfiguration("timelink").collapsibleStateExpanded) {
 			this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
 		}
-
-		this.kleioService.loadAdminToken().then(() => {
-			this.refresh();
-		});
 	}
 
 	public refresh(): any {
-		this.kleioStatus.loadTranslationInfoStatus("/", this.status!, ()=> {
-			this._onDidChangeTreeData.fire();
-		});
+		this._onDidChangeTreeData.fire();
 	}
 
 	async _readDirectory(uri: vscode.Uri): Promise<[string, vscode.FileType][]> {
@@ -700,6 +718,9 @@ export class KleioStatusProvider extends FileSystemProvider implements  vscode.T
 	}
 }
 export class KleioStatusExplorer {
+	protected kleioStatus: KleioStatus = KleioStatus.getInstance();
+	protected kleioService = KleioServiceModule.KleioService.getInstance();
+
 	private translationNeededDataProvider: KleioStatusProvider;
 	private fileWithWarningsDataProvider: KleioStatusProvider;
 	private fileWithErrorsDataProvider: KleioStatusProvider;
@@ -723,18 +744,42 @@ export class KleioStatusExplorer {
 		vscode.window.createTreeView('importReadyExplorer', { treeDataProvider });
 
 		vscode.commands.registerCommand('fileExplorer.openKleioFile', (resource) => this.openResource(resource));
+	
+		this.kleioService.loadAdminToken().then(() => {
+			console.log("Loaded Admin Token");
+			this.refresh();
+		});
 	}
 
 	private openResource(resource: vscode.Uri): void {
 		vscode.window.showTextDocument(resource);
 	}
 
-	public refresh(): void {
-		KleioStatus.getInstance().clear();
-		this.translationNeededDataProvider.refresh();
-		this.fileWithWarningsDataProvider.refresh();
-		this.fileWithErrorsDataProvider.refresh();
-		this.importReadyDataProvider.refresh();
+	public refresh(fspath?: string): void {
+		if (fspath) { // fspath, will update only one kleio path
+			var relativePath = path.dirname(this.kleioService.relativePath(fspath));
+			// remove passed path from list of fetched paths
+			this.kleioStatus.removeFromFetched(relativePath);
+			this.kleioStatus.loadTranslationInfoStatus(relativePath, ()=> {
+				this.translationNeededDataProvider.refresh();
+				this.fileWithWarningsDataProvider.refresh();
+				this.fileWithErrorsDataProvider.refresh();
+				this.importReadyDataProvider.refresh();
+			});
+		} else {
+			KleioStatus.getInstance().clear();
+			if (vscode.workspace.workspaceFolders !== undefined) {
+				vscode.workspace.workspaceFolders.filter(folder => folder.uri.scheme === 'file').forEach(folder => {
+					var relativePath = this.kleioService.relativePath(folder.uri.fsPath);
+					this.kleioStatus.loadTranslationInfoStatus(relativePath, ()=> {
+						this.translationNeededDataProvider.refresh();
+						this.fileWithWarningsDataProvider.refresh();
+						this.fileWithErrorsDataProvider.refresh();
+						this.importReadyDataProvider.refresh();
+					});
+				});
+			}
+		}
 	}
 }
 
@@ -745,7 +790,6 @@ export class FileExplorer {
 		var treeDataProvider = new FileSystemProvider();		
 		this.fullTreeDataProvider = treeDataProvider;
 		vscode.window.createTreeView('fileExplorer', { treeDataProvider });
-
 		vscode.commands.registerCommand('fileExplorer.openFile', (resource) => this.openResource(resource));
 	}
 

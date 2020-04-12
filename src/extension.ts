@@ -36,18 +36,13 @@ export function activate(context: vscode.ExtensionContext) {
 	// watch file system events to detect translation changes:
 	// translation ends with a newly created .err file
 	var watcher = vscode.workspace.createFileSystemWatcher("**/*.err"); // err file is written at the end only
-	watcher.onDidCreate(event => {
+	var eventUpdate = (event: { path: string; }) => {
 		diagnosticsProvider.onDidCreateOrChange(event.path.replace(".err", ".rpt"));
 		fileExplorer.refresh();
-		kleioExplorer.refresh();
-	});
-
-	// same as above but for changes
-	watcher.onDidChange(event => {
-		diagnosticsProvider.onDidCreateOrChange(event.path.replace(".err", ".rpt"));
-		fileExplorer.refresh();
-		kleioExplorer.refresh();
-	});
+		kleioExplorer.refresh(event.path.replace(".err", ".rpt"));
+	};
+	watcher.onDidCreate(eventUpdate);
+	watcher.onDidChange(eventUpdate);
 
 	// Registering to provide Hover Content
 	// Hover content is managed by hover.ts classes
