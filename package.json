@@ -1,8 +1,10 @@
 {
    "name": "kleio",
    "displayName": "Time Link Bundle",
-   "description": "Time Link is a web application that manages databases for micro-historical research.",
-   "version": "1.0.0",
+   "keywords": ["Time Link", "TimeLink", "MHK", "Kleio"],
+   "categories": ["Extension Packs", "Language Packs"],
+   "description": "Time Link (formerly MHK / TimeLink) is a web application that manages databases for micro-historical research.",
+   "version": "1.0.1",
    "publisher": "time-link",
    "engines": {
       "vscode": "^1.38.0"
@@ -11,9 +13,6 @@
       "type": "git",
       "url": "https://github.com/time-link/timelink-vscode.git"
    },
-   "categories": [
-      "Programming Languages"
-   ],
    "icon": "images/icon.png",
    "activationEvents": [
       "onLanguage:kleio",
