@@ -209,11 +209,9 @@ export class KleioStatus {
 				return;
 			}
 
-			// store in all files array
+			// replace existing files with new status
 			// this.files = this.files.concat(response.result.filter((item: any) => this.files.indexOf(item) < 0));
 			// this.files = this.files.concat(response.result.filter((item: { source_url: string; }) => this.files.findIndex((p: { source_url: string; }) => p.source_url === item.source_url) < 0));
-
-			// store files status in cache
 			// including all parent folders
 			response.result.forEach((element: any) => {
 				// remove existing values
@@ -223,7 +221,11 @@ export class KleioStatus {
 					this.files.splice(oldElementIndex, 1);
 				}
 				this.files.push(element);
+			});
 
+			// store files status in cache
+			this.cachedDirs = {};
+			this.files.forEach((element: any) => {
 				// store status for each dir that contains at leat one element
 				var status = element.status;
 				if (!this.cachedDirs[status]) {
