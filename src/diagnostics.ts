@@ -20,32 +20,6 @@ export module DiagnosticsProvider {
 
 		constructor() { }
 
-		/*
-		 * Returns Kleio admin token from mhk_system.properties
-		 */
-		/*loadAdminToken(): Promise<string> {
-			return new Promise<string>((resolve) => {
-				if (!vscode.workspace.workspaceFolders) {
-					console.log("No Workspace Folders open");
-					// throw new Error("No Workspace Folders open");
-					return;
-				}
-				const wsFolder = vscode.workspace.workspaceFolders[0];
-				let tmp = wsFolder.uri.fsPath.split("/sources/");
-				if (tmp.length > 1) {
-					let basePath = tmp[0];
-					let propertiesPath = basePath + "/system/conf/mhk_system.properties";
-					vscode.workspace.openTextDocument(propertiesPath).then((document) => {
-						document.getText().split(/\r?\n/).forEach(element => {
-							if (element.startsWith("mhk.kleio.service.token.admin=")) {
-								resolve(element.replace("mhk.kleio.service.token.admin=", ""));
-							}
-						});
-					});
-				}
-			});
-		}*/
-
 		translateFile(file: string) {
 			kleioService.translationsTranslate(file).then((response: any) => {
 				if (!response.error) {

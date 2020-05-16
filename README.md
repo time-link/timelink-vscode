@@ -27,6 +27,12 @@ This bundle requires Visual Studio Code with extensions support.
 
 The grammar was converted from TextMate using the yo code extension generator. The included Time Link bundle (Time Link.tmbundle) can be used to easily make changes to the TextMate grammar, and then convert the bundle to a VSCode extension.
 
+Install yo Yeoman command line utility [more info](https://code.visualstudio.com/api/get-started/your-first-extension):
+
+```console
+npm install -g yo generator-code
+```
+
 ### Create a package:
 #### Create a package using vsce (The Visual Studio Code Extension Manager)
 
