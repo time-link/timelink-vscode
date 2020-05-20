@@ -36,10 +36,10 @@ export function activate(context: vscode.ExtensionContext) {
 	// watch file system events to detect translation changes:
 	// translation ends with a newly created .err file
 	var watcher = vscode.workspace.createFileSystemWatcher("**/*.err"); // err file is written at the end only
-	var eventUpdate = (event: { path: string; }) => {
-		diagnosticsProvider.onDidCreateOrChange(event.path.replace(".err", ".rpt"));
+	var eventUpdate = (event: vscode.Uri) => {
+		diagnosticsProvider.onDidCreateOrChange(event.fsPath.replace(".err", ".rpt"));
 		fileExplorer.refresh();
-		kleioExplorer.refresh(event.path.replace(".err", ".rpt"));
+		kleioExplorer.refresh(event.fsPath.replace(".err", ".rpt"));
 	};
 	watcher.onDidCreate(eventUpdate);
 	watcher.onDidChange(eventUpdate);
@@ -67,7 +67,7 @@ export function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('extension.translateFile', (event) => {
 		if (event) {
 			// command called via right click
-			diagnosticsProvider.translateFile(event.uri.path);
+			diagnosticsProvider.translateFile(event.uri.fspath);
 		} else if (vscode.window.activeTextEditor) {
 			// command called via key binding (keyboard shorcut)
 			diagnosticsProvider.translateFile(vscode.window.activeTextEditor.document.uri.path);
