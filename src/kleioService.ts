@@ -125,12 +125,27 @@ export module KleioServiceModule {
         }
 
         /**
+         * Make sure path is in unix format with / as separator
+         */
+        pathToUnix(stringPath: string): string {
+            return stringPath.replace(/\\/g, "/");
+        }
+
+        /**
+         * Returns relative path to MHK HOME
+         */
+        relativePath(stringPath: string): string {
+            return stringPath.replace(this.mhkHome, "");
+        }
+
+        /**
          * Get a file. Obtains a link to download a file specified in the Path parameter
          */
-        translationsGet(path: string, status: string = "") {
+        translationsGet(filePath: string, status: string = "") {
+            let filePathNormalized = path.normalize(filePath);
             return new Promise<any>((resolve, reject) => {
                 let params = <any> {
-                    "path": this.relativePath(path),
+                    "path": this.pathToUnix(this.relativePath(filePathNormalized)),
                     "recurse": "yes",
                     "token": this.token
                 };
@@ -144,20 +159,6 @@ export module KleioServiceModule {
                     resolve(response);
                 });
             });
-        }
-
-        /**
-         * Make sure path is in unix format with / as separator
-         */
-        pathToUnix(stringPath: string): string {
-            return stringPath.replace(/\\/g, "/");
-        }
-
-        /**
-         * Returns relative path to MHK HOME
-         */
-        relativePath(stringPath: string): string {
-            return stringPath.replace(this.mhkHome, "");
         }
 
         /**
