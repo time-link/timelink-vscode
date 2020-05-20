@@ -630,7 +630,7 @@ export class KleioStatusProvider extends FileSystemProvider implements  vscode.T
 			const stat = await this._stat(fpath);
 			if (!child.startsWith(".")) {
 				if (stat.type ===  vscode.FileType.Directory) {
-					if (dirs && dirs.indexOf(this.kleioService.relativePath(fpath)) >= 0) {
+					if (dirs && dirs.indexOf(this.kleioService.relativeUnixPath(fpath)) >= 0) {
 						result.push([child, stat.type]);
 					}
 				} else {
@@ -759,7 +759,7 @@ export class KleioStatusExplorer {
 
 	public refresh(fspath?: string): void {
 		if (fspath) { // fspath, will update only one kleio path
-			var relativePath = path.dirname(this.kleioService.relativePath(fspath));
+			var relativePath = path.dirname(this.kleioService.relativeUnixPath(fspath));
 			// remove passed path from list of fetched paths
 			this.kleioStatus.removeFromFetched(relativePath);
 			this.kleioStatus.loadTranslationInfoStatus(relativePath, ()=> {
@@ -772,7 +772,7 @@ export class KleioStatusExplorer {
 			KleioStatus.getInstance().clear();
 			if (vscode.workspace.workspaceFolders !== undefined) {
 				vscode.workspace.workspaceFolders.filter(folder => folder.uri.scheme === 'file').forEach(folder => {
-					var relativePath = this.kleioService.relativePath(folder.uri.fsPath);
+					var relativePath = this.kleioService.relativeUnixPath(folder.uri.fsPath);
 					this.kleioStatus.loadTranslationInfoStatus(relativePath, ()=> {
 						this.translationNeededDataProvider.refresh();
 						this.fileWithWarningsDataProvider.refresh();

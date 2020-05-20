@@ -134,8 +134,8 @@ export module KleioServiceModule {
         /**
          * Returns relative path to MHK HOME
          */
-        relativePath(stringPath: string): string {
-            return stringPath.replace(this.mhkHome, "");
+        relativeUnixPath(stringPath: string): string {
+            return this.pathToUnix(stringPath.replace(this.mhkHome, ""));
         }
 
         /**
@@ -145,7 +145,7 @@ export module KleioServiceModule {
             let filePathNormalized = path.normalize(filePath);
             return new Promise<any>((resolve, reject) => {
                 let params = <any> {
-                    "path": this.pathToUnix(this.relativePath(filePathNormalized)),
+                    "path": this.relativeUnixPath(filePathNormalized),
                     "recurse": "yes",
                     "token": this.token
                 };
@@ -172,7 +172,7 @@ export module KleioServiceModule {
             }
             return new Promise<any>((resolve) => {
                 let params = {
-                    "path": this.pathToUnix(this.relativePath(filePathNormalized)),
+                    "path": this.relativeUnixPath(filePathNormalized),
                     "spawn": "no",
                     "token": this.token
                 };
