@@ -134,6 +134,10 @@
       "views": {
          "package-explorer": [
             {
+               "id": "fileExplorer",
+               "name": "Time Link File Explorer"
+            },
+            {
                "id": "translationNeededExplorer",
                "name": "Translation needed"
             },
@@ -151,10 +155,6 @@
             }
          ],
          "explorer": [
-            {
-               "id": "fileExplorer",
-               "name": "Time Link File Explorer"
-            }
          ]
       }
    },
