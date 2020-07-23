@@ -53,7 +53,7 @@ user@timelink-vscode:~$ vsce package
 user@timelink-vscode:~$ code --install-extension kleio-x.x.vsix
 ```
 
-Publish to Marketplace Visualstudio:
+Publish to Visual Studio Marketplace:
 
 ```console
 foo@bar:~$ cd timelink-vscode
