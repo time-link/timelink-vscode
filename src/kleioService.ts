@@ -8,7 +8,6 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as url from 'url';
-import { rejects } from 'assert';
 
 export module KleioServiceModule {
 
@@ -17,6 +16,7 @@ export module KleioServiceModule {
         
         private token?:string;
         private mhkHome:string = "";
+        private propertiesPath:string = "/system/conf/mhk_system.properties";
         private urlPath:string = "/json/";
 
         // client with default properties... 
@@ -40,15 +40,15 @@ export module KleioServiceModule {
         }
 
         /**
-         * Recursively finds mhk-home folder, if available.
+         * Recursively finds file name in parent folder hierarchy
          */
-        findMHKHome(currentPath: any): any {
+        findFile(currentPath: any, fileName: string): any {
             if (currentPath === path.sep) { // root folder, no mhk home found
                 return null;
-            } else if (fs.existsSync(path.join(currentPath, path.sep, ".mhk-home"))) {
+            } else if (fs.existsSync(path.join(currentPath, path.sep, fileName))) {
                 return currentPath;
             } else {
-                return this.findMHKHome(path.dirname(currentPath));
+                return this.findFile(path.dirname(currentPath), fileName);
             }
         }
         
@@ -68,6 +68,19 @@ export module KleioServiceModule {
             });
         }
 
+        findMHKHome(fsPath: any) {
+            if (!this.mhkHome) {
+                // find .mhk file in hierarchy
+                this.mhkHome = this.findFile(fsPath, ".mhk-home");
+                this.propertiesPath = "/system/conf/mhk_system.properties";
+            }
+            // couldn't file mhk-home, try with .mhk file
+            if (!this.mhkHome) {
+                this.mhkHome = this.findFile(fsPath, ".mhk");
+                this.propertiesPath = "/.mhk";
+            }
+        }
+
         /**
          * Loads Kleio Server url from .mhk
          */
@@ -75,29 +88,28 @@ export module KleioServiceModule {
             console.log('Loading Kleio Url');            
             return new Promise<string>((resolve) => {
 				if (vscode.workspace.workspaceFolders) {
-                    if (!this.mhkHome) {
-                        this.mhkHome = this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
-                    }
+                    this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
                     if (this.mhkHome) {
                         let filePath = path.join(path.dirname(this.mhkHome), ".mhk");
-                        this.loadProperty(filePath, "kleio_url").then((response: any) => {
-                            if (!response.error) {
-                                let parsedUrl = url.parse(response);
-                                this.client = jayson.Client.http({
-                                    host: parsedUrl.hostname,
-                                    path: this.urlPath,
-                                    port: parsedUrl.port
-                                });
-                                console.log("Loaded Kleio Server Url: " + response);
-                            }
-                        }).catch(error => {
-                            vscode.window.showErrorMessage("Error loading Kleio Server url: translation services will not be available.");
-                            console.log(error);
-                        });
+                        if (fs.existsSync(filePath)) {
+                            this.loadProperty(filePath, "kleio_url").then((response: any) => {
+                                if (!response.error) {
+                                    let parsedUrl = url.parse(response);
+                                    this.client = jayson.Client.http({
+                                        host: parsedUrl.hostname,
+                                        path: this.urlPath,
+                                        port: parsedUrl.port
+                                    });
+                                    console.log("Loaded Kleio Server Url: " + response);
+                                }
+                            }).catch(error => {
+                                vscode.window.showErrorMessage("Error loading Kleio Server url: translation services will not be available.");
+                                console.log(error);
+                            });
+                        }
                     }
 				}
             });
-            
         }
 
         /**
@@ -107,9 +119,9 @@ export module KleioServiceModule {
             console.log('Loading admin token');
             return new Promise<string>((resolve) => {
 				if (vscode.workspace.workspaceFolders) {
-                    this.mhkHome = this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
+                    this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
                     if (this.mhkHome) {
-                        let propPath = path.join(this.mhkHome, "/system/conf/mhk_system.properties");
+                        let propPath = path.join(this.mhkHome, this.propertiesPath);
                         this.loadProperty(propPath, "mhk.kleio.service.token.admin").then((response: any) => {
                             if (!response.error) {
                                 this.token = response.replace("mhk.kleio.service.token.admin=", "");
