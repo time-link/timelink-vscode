@@ -67,7 +67,7 @@ export function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('extension.translateFile', (event) => {
 		if (event) {
 			// command called via right click
-			diagnosticsProvider.translateFile(event.uri.fspath);
+			diagnosticsProvider.translateFile(event.uri.path);
 		} else if (vscode.window.activeTextEditor) {
 			// command called via key binding (keyboard shorcut)
 			diagnosticsProvider.translateFile(vscode.window.activeTextEditor.document.uri.path);
