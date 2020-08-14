@@ -1,8 +1,16 @@
 {
    "name": "kleio",
    "displayName": "Time Link Bundle",
-   "keywords": ["TimeLink", "MHK", "Kleio", "Time Link"],
-   "categories": ["Extension Packs", "Language Packs"],
+   "keywords": [
+      "TimeLink",
+      "MHK",
+      "Kleio",
+      "Time Link"
+   ],
+   "categories": [
+      "Extension Packs",
+      "Language Packs"
+   ],
    "description": "Time Link (formerly MHK / TimeLink) is a web application that manages databases for micro-historical research.",
    "version": "1.0.5",
    "publisher": "time-link",
@@ -154,8 +162,7 @@
                "name": "Ready for import"
             }
          ],
-         "explorer": [
-         ]
+         "explorer": []
       }
    },
    "scripts": {
@@ -176,7 +183,7 @@
       "@types/rimraf": "^2.0.3",
       "@types/vscode": "^1.38.0",
       "glob": "^7.1.4",
-      "mocha": "^6.1.4",
+      "mocha": "^6.2.3",
       "ts-loader": "^6.2.1",
       "tslint": "^5.12.1",
       "typescript": "^3.3.1",
