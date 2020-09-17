@@ -372,13 +372,13 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 	constructor(status?: string) {
 		this.status = status;
 		this._onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
-
 		this.showAllFilesExplorer = vscode.workspace.getConfiguration("timelink").showAllFilesInExplorer;
 	}
 
 	// refreh only current node?
 	// https://github.com/Microsoft/vscode/issues/62798
 	public refresh(): any {	
+		this._onDidChangeTreeData.fire();
 		// only currently expanded nodes
 		/*for (let i = 0; i < this.dirStatus.length; i++) {
 			const child = this.dirStatus[i];
@@ -797,6 +797,31 @@ export class FileExplorer {
 
 	private openResource(resource: vscode.Uri): void {
 		vscode.window.showTextDocument(resource);
+	}
+
+	// delete cli and related filed
+	public deleteCliAndRelated(uri: vscode.Uri): void {
+		var filesToDelete: vscode.Uri[] = [];
+		var action = 'Delete Files';
+		var message = 'The following files will be deleted:';
+		filesToDelete.push(uri);
+		message = message.concat('\n\n').concat(uri.fsPath);
+		// get related files
+		for (let entry of ['.err', '.ids', '.org', '.rpt', '.xml']) {
+			var currentUri = vscode.Uri.parse(uri.fsPath.replace(/.cli$/, entry));
+			if (fs.existsSync(currentUri.path)) {
+				filesToDelete.push(currentUri);
+				message = message.concat('\n\n').concat(currentUri.fsPath);
+			}
+		}
+		// show warning and wait for confirmation!
+		vscode.window.showWarningMessage(message, { modal: true }, ...[ action ]).then((result) => {
+			if (result === action) {
+				for (let currentUri of filesToDelete) {
+					this.fullTreeDataProvider.delete(currentUri, {recursive: false});
+				}
+			}
+		});
 	}
 
 	public refresh(): void {

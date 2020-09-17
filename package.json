@@ -12,7 +12,7 @@
       "Language Packs"
    ],
    "description": "Time Link (formerly MHK / TimeLink) is a web application that manages databases for micro-historical research.",
-   "version": "1.0.6",
+   "version": "1.0.7",
    "publisher": "time-link",
    "engines": {
       "vscode": "^1.38.0"
@@ -58,6 +58,10 @@
                "when": "viewItem == fileCli"
             },
             {
+               "command": "extension.deleteFile",
+               "when": "viewItem == fileCli"
+            },
+            {
                "command": "revealFileInOS"
             }
          ]
@@ -85,6 +89,10 @@
          {
             "command": "extension.translateFile",
             "title": "Translate File"
+         },
+         {
+            "command": "extension.deleteFile",
+            "title": "Delete cli and generated files"
          },
          {
             "command": "revealFileInOS",

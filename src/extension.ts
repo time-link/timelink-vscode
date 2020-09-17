@@ -37,12 +37,22 @@ export function activate(context: vscode.ExtensionContext) {
 	// translation ends with a newly created .err file
 	var watcher = vscode.workspace.createFileSystemWatcher("**/*.err"); // err file is written at the end only
 	var eventUpdate = (event: vscode.Uri) => {
-		diagnosticsProvider.onDidCreateOrChange(event.fsPath.replace(".err", ".rpt"));
+		var filePath = event.fsPath.replace(".err", ".rpt");
+		diagnosticsProvider.onDidCreateOrChange(filePath);
 		fileExplorer.refresh();
-		kleioExplorer.refresh(event.fsPath.replace(".err", ".rpt"));
+		kleioExplorer.refresh(filePath);
 	};
 	watcher.onDidCreate(eventUpdate);
 	watcher.onDidChange(eventUpdate);
+
+	// watch cli creation/deletion from file system
+	var watcherCli = vscode.workspace.createFileSystemWatcher("**/*.cli");
+	var eventUpdateCli = (event: vscode.Uri) => {
+	  fileExplorer.refresh();
+		kleioExplorer.refresh(event.fsPath);
+	};
+	watcherCli.onDidCreate(eventUpdateCli);
+	watcherCli.onDidDelete(eventUpdateCli);
 
 	// Registering to provide Hover Content
 	// Hover content is managed by hover.ts classes
@@ -71,6 +81,15 @@ export function activate(context: vscode.ExtensionContext) {
 		} else if (vscode.window.activeTextEditor) {
 			// command called via key binding (keyboard shorcut)
 			diagnosticsProvider.translateFile(vscode.window.activeTextEditor.document.uri.path);
+		}
+	});
+	context.subscriptions.push(disposable);
+
+	// delete
+	disposable = vscode.commands.registerCommand('extension.deleteFile', (event) => {
+		if (event) {
+			// command called via right click
+			fileExplorer.deleteCliAndRelated(event.uri);
 		}
 	});
 	context.subscriptions.push(disposable);
