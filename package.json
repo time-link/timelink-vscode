@@ -12,7 +12,7 @@
       "Language Packs"
    ],
    "description": "Time Link (formerly MHK / TimeLink) is a web application that manages databases for micro-historical research.",
-   "version": "1.0.7",
+   "version": "1.0.8",
    "publisher": "time-link",
    "engines": {
       "vscode": "^1.38.0"
@@ -24,7 +24,7 @@
    "icon": "images/icon.png",
    "activationEvents": [
       "onLanguage:kleio",
-      "onView:fileExplorer"
+      "onView:timelink.views.fileExplorer"
    ],
    "main": "./out/extension.js",
    "contributes": {
@@ -49,7 +49,7 @@
             {
                "command": "extension.reloadTranslationInfo",
                "group": "navigation",
-               "when": "view == fileExplorer || view == translationNeededExplorer || view == fileWithErrorsExplorer || view == fileWithWarningsExplorer || view == importReadyExplorer"
+               "when": "view == timelink.views.fileExplorer || view == timelink.views.translationNeededExplorer || view == timelink.views.fileWithErrorsExplorer || view == timelink.views.fileWithWarningsExplorer || view == timelink.views.importReadyExplorer"
             }
          ],
          "view/item/context": [
@@ -141,36 +141,38 @@
       "viewsContainers": {
          "activitybar": [
             {
-               "id": "package-explorer",
+               "id": "timelink",
                "title": "Time Link",
-               "icon": "images/icon_extension.png"
+               "icon": "images/icon_extension.svg"
             }
          ]
       },
       "views": {
-         "package-explorer": [
+         "timelink": [
             {
-               "id": "fileExplorer",
-               "name": "Time Link File Explorer"
+               "id": "timelink.views.fileExplorer",
+               "name": "File Explorer"
             },
             {
-               "id": "translationNeededExplorer",
+               "id": "timelink.views.translationNeededExplorer",
                "name": "Translation needed"
             },
             {
-               "id": "fileWithErrorsExplorer",
-               "name": "With errors"
+               "id": "timelink.views.fileWithErrorsExplorer",
+               "name": "With errors",
+               "visibility": "collapsed"
             },
             {
-               "id": "fileWithWarningsExplorer",
-               "name": "With warnings"
+               "id": "timelink.views.fileWithWarningsExplorer",
+               "name": "With warnings",
+               "visibility": "collapsed"
             },
             {
-               "id": "importReadyExplorer",
-               "name": "Ready for import"
+               "id": "timelink.views.importReadyExplorer",
+               "name": "Ready for import",
+               "visibility": "collapsed"
             }
-         ],
-         "explorer": []
+         ]
       }
    },
    "scripts": {

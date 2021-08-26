@@ -324,7 +324,7 @@ export class KleioEntry extends vscode.TreeItem {
 				light: path.join(__filename, '..', '..', 'resources', 'light', 'file.png'),
 				dark: path.join(__filename, '..', '..', 'resources', 'dark', 'file.png')
 			};
-			this.command = { command: 'fileExplorer.openKleioFile', title: "Open File", arguments: [uri], };
+			this.command = { command: 'timelink.views.fileExplorer.openKleioFile', title: "Open File", arguments: [uri], };
 		}
 	}
 }
@@ -378,7 +378,7 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 	// refreh only current node?
 	// https://github.com/Microsoft/vscode/issues/62798
 	public refresh(): any {	
-		this._onDidChangeTreeData.fire();
+		this._onDidChangeTreeData.fire(undefined);
 		// only currently expanded nodes
 		/*for (let i = 0; i < this.dirStatus.length; i++) {
 			const child = this.dirStatus[i];
@@ -389,7 +389,7 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 	}
 
 	public fire(): any {	
-		this._onDidChangeTreeData.fire();
+		this._onDidChangeTreeData.fire(undefined);
 	}
 	
 	get onDidChangeFile(): vscode.Event<vscode.FileChangeEvent[]> {
@@ -572,7 +572,7 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 	getTreeItem(element: Entry): vscode.TreeItem {
 		const treeItem = new vscode.TreeItem(element.uri, element.type === vscode.FileType.Directory ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
 		if (element.type === vscode.FileType.File) {
-			treeItem.command = { command: 'fileExplorer.openFile', title: "Open File", arguments: [element.uri], };
+			treeItem.command = { command: 'timelink.views.fileExplorer.openFile', title: "Open File", arguments: [element.uri], };
 			treeItem.contextValue = 'file';
 			if(this.isKleioFile(element.uri.path)) {
 				treeItem.contextValue = "fileCli";
@@ -617,7 +617,7 @@ export class KleioStatusProvider extends FileSystemProvider implements  vscode.T
 	}
 
 	public refresh(): any {
-		this._onDidChangeTreeData.fire();
+		this._onDidChangeTreeData.fire(undefined);
 	}
 
 	async _readDirectory(uri: vscode.Uri): Promise<[string, vscode.FileType][]> {
@@ -731,21 +731,21 @@ export class KleioStatusExplorer {
 	constructor(context: vscode.ExtensionContext) {
 		var treeDataProvider = new KleioStatusProvider("T");
 		this.translationNeededDataProvider = treeDataProvider;
-		vscode.window.createTreeView('translationNeededExplorer', { treeDataProvider });
+		vscode.window.createTreeView('timelink.views.translationNeededExplorer', { treeDataProvider });
 
 		treeDataProvider = new KleioStatusProvider("W");
 		this.fileWithWarningsDataProvider = treeDataProvider;
-		vscode.window.createTreeView('fileWithWarningsExplorer', { treeDataProvider });
+		vscode.window.createTreeView('timelink.views.fileWithWarningsExplorer', { treeDataProvider });
 
 		treeDataProvider = new KleioStatusProvider("E");
 		this.fileWithErrorsDataProvider = treeDataProvider;
-		vscode.window.createTreeView('fileWithErrorsExplorer', { treeDataProvider });
+		vscode.window.createTreeView('timelink.views.fileWithErrorsExplorer', { treeDataProvider });
 
 		treeDataProvider = new KleioStatusProvider("V");
 		this.importReadyDataProvider = treeDataProvider;
-		vscode.window.createTreeView('importReadyExplorer', { treeDataProvider });
+		vscode.window.createTreeView('timelink.views.importReadyExplorer', { treeDataProvider });
 
-		vscode.commands.registerCommand('fileExplorer.openKleioFile', (resource) => this.openResource(resource));
+		vscode.commands.registerCommand('timelink.views.fileExplorer.openKleioFile', (resource) => this.openResource(resource));
 	
 		this.kleioService.loadAdminToken().then(() => {
 			console.log("Loaded Admin Token");
@@ -791,8 +791,8 @@ export class FileExplorer {
 	constructor(context: vscode.ExtensionContext) {
 		var treeDataProvider = new FileSystemProvider();		
 		this.fullTreeDataProvider = treeDataProvider;
-		vscode.window.createTreeView('fileExplorer', { treeDataProvider });
-		vscode.commands.registerCommand('fileExplorer.openFile', (resource) => this.openResource(resource));
+		vscode.window.createTreeView('timelink.views.fileExplorer', { treeDataProvider });
+		vscode.commands.registerCommand('timelink.views.fileExplorer.openFile', (resource) => this.openResource(resource));
 	}
 
 	private openResource(resource: vscode.Uri): void {

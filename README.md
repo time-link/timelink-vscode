@@ -59,6 +59,12 @@ Publish to Visual Studio Marketplace:
 foo@bar:~$ cd timelink-vscode
 foo@bar:~$ vsce publish
 ```
+
+If token expired run:
+```console
+foo@bar:~$ vsce login time-link
+```
+
 More info at https://code.visualstudio.com/api/working-with-extensions/publishing-extension
 
 #### Convert TextMate bundle features using [Yeoman](https://yeoman.io/learning/) code extension generator:
