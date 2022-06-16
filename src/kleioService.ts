@@ -13,11 +13,11 @@ export module KleioServiceModule {
 
     export class KleioService {
         private static instance: KleioService;
-        
-        private token?:string;
-        private mhkHome:string = "";
-        private propertiesPath:string = "/system/conf/mhk_system.properties";
-        private urlPath:string = "/json/";
+
+        private token?: string;
+        private mhkHome: string = "";
+        private propertiesPath: string = "/system/conf/mhk_system.properties";
+        private urlPath: string = "/json/";
 
         // client with default properties... 
         // will try to get url property from .mhk at user's home at runtime
@@ -51,7 +51,7 @@ export module KleioServiceModule {
                 return this.findFile(path.dirname(currentPath), fileName);
             }
         }
-        
+
         /**
          * Loads given property from given file
          */
@@ -85,9 +85,9 @@ export module KleioServiceModule {
          * Loads Kleio Server url from .mhk
          */
         loadKleioUrl(): Promise<string> {
-            console.log('Loading Kleio Url');            
+            console.log('Loading Kleio Url');
             return new Promise<string>((resolve) => {
-				if (vscode.workspace.workspaceFolders) {
+                if (vscode.workspace.workspaceFolders) {
                     this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
                     if (this.mhkHome) {
                         let filePath = path.join(path.dirname(this.mhkHome), ".mhk");
@@ -108,7 +108,7 @@ export module KleioServiceModule {
                             });
                         }
                     }
-				}
+                }
             });
         }
 
@@ -118,22 +118,22 @@ export module KleioServiceModule {
         loadAdminToken(): Promise<string> {
             console.log('Loading admin token');
             return new Promise<string>((resolve) => {
-				if (vscode.workspace.workspaceFolders) {
+                if (vscode.workspace.workspaceFolders) {
                     this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
                     if (this.mhkHome) {
                         let propPath = path.join(this.mhkHome, this.propertiesPath);
                         this.loadProperty(propPath, "mhk.kleio.service.token.admin").then((response: any) => {
                             if (!response.error) {
                                 this.token = response.replace("mhk.kleio.service.token.admin=", "");
-                                resolve(this.token);
+                                resolve(this.token ?? "");
                             }
                         }).catch(error => {
                             vscode.window.showErrorMessage("Error loading Kleio admin token: translation services will not be available.");
                             console.log(error);
                         });
                     }
-				}
-			});
+                }
+            });
         }
 
         /**
@@ -156,7 +156,7 @@ export module KleioServiceModule {
         translationsGet(filePath: string, status: string = "") {
             let filePathNormalized = path.normalize(filePath);
             return new Promise<any>((resolve, reject) => {
-                let params = <any> {
+                let params = <any>{
                     "path": this.relativeUnixPath(filePathNormalized),
                     "recurse": "yes",
                     "token": this.token
@@ -165,7 +165,7 @@ export module KleioServiceModule {
                     params.status = status;
                 }
                 return this.client.request('translations_get', params, function (err: any, response: any) {
-                    if (err) { 
+                    if (err) {
                         reject(err);
                     }
                     resolve(response);

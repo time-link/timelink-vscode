@@ -13,9 +13,9 @@ export function activate(context: vscode.ExtensionContext) {
 	const hoverProvider: HoverProvider.HoverContent = new HoverProvider.HoverContent(context);
 	const completionProvider: CompletionProvider.Completion = new CompletionProvider.Completion();
 	const diagnosticsProvider: DiagnosticsProvider.Diagnostics = new DiagnosticsProvider.Diagnostics();
-	
-	var fileExplorer:FileExplorer;
-	var kleioExplorer:KleioStatusExplorer;
+
+	var fileExplorer: FileExplorer;
+	var kleioExplorer: KleioStatusExplorer;
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
@@ -48,7 +48,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// watch cli creation/deletion from file system
 	var watcherCli = vscode.workspace.createFileSystemWatcher("**/*.cli");
 	var eventUpdateCli = (event: vscode.Uri) => {
-	  fileExplorer.refresh();
+		fileExplorer.refresh();
 		kleioExplorer.refresh(event.fsPath);
 	};
 	watcherCli.onDidCreate(eventUpdateCli);
@@ -85,14 +85,25 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(disposable);
 
-	// delete
-	disposable = vscode.commands.registerCommand('extension.deleteFile', (event) => {
+	// delete Cli and generated files
+	disposable = vscode.commands.registerCommand('extension.deleteCliFile', (event) => {
 		if (event) {
 			// command called via right click
-			fileExplorer.deleteCliAndRelated(event.uri);
+			fileExplorer.deleteCliAndRelated(event.uri, true);
 		}
 	});
 	context.subscriptions.push(disposable);
+
+
+	// delete generated files
+	disposable = vscode.commands.registerCommand('extension.deleteGeneratedFiles', (event) => {
+		if (event) {
+			// command called via right click
+			fileExplorer.deleteCliAndRelated(event.uri, false);
+		}
+	});
+	context.subscriptions.push(disposable);
+
 
 	disposable = vscode.commands.registerCommand('extension.reloadTranslationInfo', (event) => {
 		fileExplorer.refresh();

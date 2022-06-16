@@ -58,7 +58,11 @@
                "when": "viewItem == fileCli"
             },
             {
-               "command": "extension.deleteFile",
+               "command": "extension.deleteCliFile",
+               "when": "viewItem == fileCli"
+            },
+            {
+               "command": "extension.deleteGeneratedFiles",
                "when": "viewItem == fileCli"
             },
             {
@@ -91,8 +95,12 @@
             "title": "Translate File"
          },
          {
-            "command": "extension.deleteFile",
-            "title": "Delete cli and generated files"
+            "command": "extension.deleteCliFile",
+            "title": "Delete"
+         },
+         {
+            "command": "extension.deleteGeneratedFiles",
+            "title": "Delete Generated Files"
          },
          {
             "command": "revealFileInOS",
