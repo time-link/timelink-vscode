@@ -14,6 +14,8 @@ export module KleioServiceModule {
     export class KleioService {
         private static instance: KleioService;
 
+        private kleioHost: string = "localhost";
+        private kleioPort: number = 8088;
         private token?: string;
         private mhkHome: string = "";
         private propertiesPath: string = "/system/conf/mhk_system.properties";
@@ -21,15 +23,10 @@ export module KleioServiceModule {
 
         // client with default properties... 
         // will try to get url property from .mhk at user's home at runtime
-        private client = jayson.Client.http({
-            host: 'localhost',
-            path: this.urlPath,
-            port: 8088
-        });
+        private client!: jayson.Client;
 
         constructor() {
-            this.loadAdminToken();
-            this.loadKleioUrl();
+            this.init();
         }
 
         static getInstance(): KleioService {
@@ -37,6 +34,36 @@ export module KleioServiceModule {
                 KleioService.instance = new KleioService();
             }
             return KleioService.instance;
+        }
+
+        init() {
+            if (vscode.workspace.getConfiguration("timelink.kleio").kleioServerToken) {
+                console.log("Init Kleio Server with custom extension properties");
+                this.initJsonClient();
+            } else {
+                console.log("Init Kleio Server with configuration properties");
+                this.loadAdminToken();
+                this.loadKleioUrl();
+            }
+        }
+
+        initJsonClient() {
+            var section: string = "timelink.kleio";
+            if (vscode.workspace.getConfiguration(section).kleioServerPort) {
+                this.kleioPort = Number(vscode.workspace.getConfiguration(section).kleioServerPort);
+            }
+            if (vscode.workspace.getConfiguration(section).kleioServerHost) {
+                this.kleioHost = vscode.workspace.getConfiguration(section).kleioServerHost;
+            }
+            if (vscode.workspace.getConfiguration(section).kleioServerToken) {
+                this.token = vscode.workspace.getConfiguration(section).kleioServerToken;
+            }
+
+            this.client = jayson.Client.http({
+                host: this.kleioHost,
+                path: this.urlPath,
+                port: this.kleioPort
+            });
         }
 
         /**
@@ -95,10 +122,12 @@ export module KleioServiceModule {
                             this.loadProperty(filePath, "kleio_url").then((response: any) => {
                                 if (!response.error) {
                                     let parsedUrl = url.parse(response);
+                                    this.kleioHost = parsedUrl.hostname ?? this.kleioHost;
+                                    this.kleioPort = Number(parsedUrl.port) ?? this.kleioPort;
                                     this.client = jayson.Client.http({
-                                        host: parsedUrl.hostname,
+                                        host: this.kleioHost,
                                         path: this.urlPath,
-                                        port: parsedUrl.port
+                                        port: this.kleioPort
                                     });
                                     console.log("Loaded Kleio Server Url: " + response);
                                 }
@@ -113,13 +142,21 @@ export module KleioServiceModule {
         }
 
         /**
-         * Loads Kleio Server admin token from mhk-home
+         * Loads Kleio Server admin token from mhk-home or from VSCode settings
          */
         loadAdminToken(): Promise<string> {
             console.log('Loading admin token');
+
             return new Promise<string>((resolve) => {
                 if (vscode.workspace.workspaceFolders) {
                     this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
+                    if (vscode.workspace.getConfiguration("timelink.kleio").kleioServerToken) {
+                        // Ignore token from configuration files...
+                        // Using custom admin token from VSC settings
+                        console.log('Using custom admin token');
+                        resolve(this.token ?? "");
+                        return;
+                    }
                     if (this.mhkHome) {
                         let propPath = path.join(this.mhkHome, this.propertiesPath);
                         this.loadProperty(propPath, "mhk.kleio.service.token.admin").then((response: any) => {

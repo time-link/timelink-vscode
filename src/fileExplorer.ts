@@ -372,7 +372,7 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 	constructor(status?: string) {
 		this.status = status;
 		this._onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
-		this.showAllFilesExplorer = vscode.workspace.getConfiguration("timelink").showAllFilesInExplorer;
+		this.showAllFilesExplorer = vscode.workspace.getConfiguration("timelink.explorer").showAllFilesInExplorer;
 	}
 
 	// refreh only current node?
@@ -612,7 +612,7 @@ export class KleioStatusProvider extends FileSystemProvider implements vscode.Tr
 		this.status = status;
 		this._onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
 
-		if (vscode.workspace.getConfiguration("timelink").collapsibleStateExpanded) {
+		if (vscode.workspace.getConfiguration("timelink.explorer").collapsibleStateExpanded) {
 			this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
 		}
 	}

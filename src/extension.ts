@@ -6,6 +6,7 @@ import { HoverProvider } from "./hover";
 import { CompletionProvider } from "./completion";
 import { DiagnosticsProvider } from './diagnostics';
 import { FileExplorer, KleioStatusProvider, KleioStatusExplorer } from './fileExplorer';
+import { KleioServiceModule } from './kleioService';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -114,6 +115,15 @@ export function activate(context: vscode.ExtensionContext) {
 	// `window.createView`
 	fileExplorer = new FileExplorer(context);
 	kleioExplorer = new KleioStatusExplorer(context);
+
+	vscode.workspace.onDidChangeConfiguration(event => {
+		let affectedKleioServer = event.affectsConfiguration("timelink.kleio.kleioServerPort")
+			|| event.affectsConfiguration("timelink.kleio.kleioServerHost")
+			|| event.affectsConfiguration("timelink.kleio.kleioServerToken");
+		if (affectedKleioServer) {
+			KleioServiceModule.KleioService.getInstance().init();
+		}
+	});
 }
 
 // this method is called when your extension is deactivated

@@ -32,12 +32,27 @@
          "type": "object",
          "title": "Time Link",
          "properties": {
-            "timelink.showAllFilesInExplorer": {
+            "timelink.kleio.kleioServerHost": {
+               "type": "string",
+               "default": "localhost",
+               "description": "Kleio Server host. (Must set port and token too)"
+            },
+            "timelink.kleio.kleioServerPort": {
+               "type": "string",
+               "default": "8088",
+               "description": "Kleio Server port. (Must set host and token too)"
+            },
+            "timelink.kleio.kleioServerToken": {
+               "type": "string",
+               "default": "",
+               "description": "Kleio Server token. (Must set host and port too)"
+            },
+            "timelink.explorer.showAllFilesInExplorer": {
                "type": "boolean",
                "default": false,
                "description": "Show all files in Time Link Explorer."
             },
-            "timelink.collapsibleStateExpanded": {
+            "timelink.explorer.collapsibleStateExpanded": {
                "type": "boolean",
                "default": false,
                "description": "Launch Status Tree Views Expanded."
