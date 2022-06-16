@@ -100,6 +100,9 @@ Keybindings must be added manually to package.json file to 'keybindings' section
 
 ## Release Notes
 
+### 1.0.16
+Adds option to delete generated files only
+New VSCode setting for Kleio Server Host, Port and Token
 ### 1.0.1
 Several optimisations in kleio status updates
 

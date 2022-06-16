@@ -122,8 +122,8 @@ export module KleioServiceModule {
                             this.loadProperty(filePath, "kleio_url").then((response: any) => {
                                 if (!response.error) {
                                     let parsedUrl = url.parse(response);
-                                    this.kleioHost = parsedUrl.hostname ?? this.kleioHost;
-                                    this.kleioPort = Number(parsedUrl.port) ?? this.kleioPort;
+                                    this.kleioHost = parsedUrl.hostname ? parsedUrl.hostname : this.kleioHost;
+                                    this.kleioPort = parsedUrl.port ? Number(parsedUrl.port) : this.kleioPort;
                                     this.client = jayson.Client.http({
                                         host: this.kleioHost,
                                         path: this.urlPath,
@@ -154,7 +154,7 @@ export module KleioServiceModule {
                         // Ignore token from configuration files...
                         // Using custom admin token from VSC settings
                         console.log('Using custom admin token');
-                        resolve(this.token ?? "");
+                        resolve(this.token!);
                         return;
                     }
                     if (this.mhkHome) {
@@ -162,7 +162,7 @@ export module KleioServiceModule {
                         this.loadProperty(propPath, "mhk.kleio.service.token.admin").then((response: any) => {
                             if (!response.error) {
                                 this.token = response.replace("mhk.kleio.service.token.admin=", "");
-                                resolve(this.token ?? "");
+                                resolve(this.token!);
                             }
                         }).catch(error => {
                             vscode.window.showErrorMessage("Error loading Kleio admin token: translation services will not be available.");
