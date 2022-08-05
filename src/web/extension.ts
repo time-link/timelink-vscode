@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { HoverProvider } from "./hover";
 import { CompletionProvider } from "./completion";
 import { DiagnosticsProvider } from './diagnostics';
-import { FileExplorer, KleioStatusProvider, KleioStatusExplorer } from './fileExplorer';
+import { FileExplorer, KleioStatusExplorer } from './fileExplorer';
 import { KleioServiceModule } from './kleioService';
 
 // this method is called when your extension is activated
@@ -15,7 +15,10 @@ export function activate(context: vscode.ExtensionContext) {
 	const completionProvider: CompletionProvider.Completion = new CompletionProvider.Completion();
 	const diagnosticsProvider: DiagnosticsProvider.Diagnostics = new DiagnosticsProvider.Diagnostics();
 
+	// main time link explorer with all the files
 	var fileExplorer: FileExplorer;
+
+	// organizes files by status: translation needed, ready to import, etc
 	var kleioExplorer: KleioStatusExplorer;
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
@@ -49,8 +52,8 @@ export function activate(context: vscode.ExtensionContext) {
 	// watch cli creation/deletion from file system
 	var watcherCli = vscode.workspace.createFileSystemWatcher("**/*.cli");
 	var eventUpdateCli = (event: vscode.Uri) => {
-		fileExplorer.refresh();
-		kleioExplorer.refresh(event.fsPath);
+		// fileExplorer.refresh();
+		// kleioExplorer.refresh(event.fsPath);
 	};
 	watcherCli.onDidCreate(eventUpdateCli);
 	watcherCli.onDidDelete(eventUpdateCli);
@@ -105,7 +108,6 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(disposable);
 
-
 	disposable = vscode.commands.registerCommand('extension.reloadTranslationInfo', (event) => {
 		fileExplorer.refresh();
 		kleioExplorer.refresh();
@@ -117,9 +119,9 @@ export function activate(context: vscode.ExtensionContext) {
 	kleioExplorer = new KleioStatusExplorer(context);
 
 	vscode.workspace.onDidChangeConfiguration(event => {
-		let affectedKleioServer = event.affectsConfiguration("timelink.kleio.kleioServerPort")
-			|| event.affectsConfiguration("timelink.kleio.kleioServerHost")
-			|| event.affectsConfiguration("timelink.kleio.kleioServerToken");
+		let affectedKleioServer = event.affectsConfiguration("timelink.kleio.kleioServerUrl")
+			|| event.affectsConfiguration("timelink.kleio.kleioServerToken")
+			|| event.affectsConfiguration("timelink.kleio.kleioServerHome");
 		if (affectedKleioServer) {
 			KleioServiceModule.KleioService.getInstance().init();
 		}

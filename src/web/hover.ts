@@ -3,16 +3,16 @@ import * as vscode from 'vscode';
 import docJsonFile from './StructureDocumentation.json';
 
 export module HoverProvider {
-  const DocJsonKey = "DocJsonKey";
-  const DocJsonUrl = "https://docs.google.com/uc?export=download&id=1QW1-G34sxTwv4-mROCudJJRgt2N6JQ0B";
+  const docJsonKey = "DocJsonKey";
+  const docJsonUrl = "https://docs.google.com/uc?export=download&id=1QW1-G34sxTwv4-mROCudJJRgt2N6JQ0B";
   var docJson: object;
 
   export class HoverContent {
 
     constructor(context: vscode.ExtensionContext) {
-      if (context.workspaceState.get(DocJsonKey) !== undefined) {
+      if (context.workspaceState.get(docJsonKey) !== undefined) {
         console.log("Cached documentation exists.");
-        docJson = context.workspaceState.get(DocJsonKey) as object;
+        docJson = context.workspaceState.get(docJsonKey) as object;
         // console.log(typeof docJson);
         // console.log(docJson);
       } else {
@@ -24,35 +24,20 @@ export module HoverProvider {
       this.checkNotationUpdates(context);
     }
 
-    writeToFile() {
-      var fs = require('fs');
-      fs.readFile('readMe.txt', 'utf8', function (err: any, data: any) {
-        fs.writeFile('writeMe.txt', data, function (err: any, result: any) {
-          if (err) {
-            console.log('error', err);
-          }
-        });
-      });
-    }
-
+    // TODO: fetch from google docs is blocked by CORS
+    // json file must be returned by kleio server (or other)
     checkNotationUpdates(context: vscode.ExtensionContext) {
-      console.log('Connecting to Kleio Server');
-      var rp = require('request-promise');
-
-      var options = {
+      fetch(docJsonUrl, {
         method: 'GET',
-        uri: DocJsonUrl,
-        json: true
-      };
-
-      rp(options)
-        .then(function (parsedBody: any) {
-          context.workspaceState.update(DocJsonKey, parsedBody);
-          docJson = context.workspaceState.get(DocJsonKey) as object;
-        })
-        .catch(function (err: any) {
-          console.log("Couldn't connect to Kleio Server?");
-        });
+        headers: {
+          "content-type": "application/json",
+        },
+      }).then((response) => {
+        context.workspaceState.update(docJsonKey, response);
+        docJson = context.workspaceState.get(docJsonKey) as object;
+      }).catch(function (err: any) {
+        console.log("Couldn't update json");
+      });;
     }
 
     // get key value from json data
@@ -77,7 +62,7 @@ export module HoverProvider {
         if (idx >= 0) {
           var hovertext = "**" + hoveredWord + "**";
           values.push(hovertext);
-          
+
           hovertext = "";
           hovertext += "\r\n\r\n**Minimal:** " + Object.values(tmp)[idx].minimal;
           hovertext += "\r\n\r\n**Complete:** " + Object.values(tmp)[idx].complete;

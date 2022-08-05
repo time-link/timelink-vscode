@@ -1,232 +1,225 @@
 {
-   "name": "kleio",
-   "displayName": "Time Link Bundle",
-   "keywords": [
-      "TimeLink",
-      "MHK",
-      "Kleio",
-      "Time Link"
-   ],
-   "categories": [
-      "Extension Packs",
-      "Language Packs"
-   ],
-   "description": "Time Link (formerly MHK / TimeLink) is a web application that manages databases for micro-historical research.",
-   "version": "1.0.9",
-   "publisher": "time-link",
-   "engines": {
-      "vscode": "^1.38.0"
-   },
-   "repository": {
-      "type": "git",
-      "url": "https://github.com/time-link/timelink-vscode.git"
-   },
-   "icon": "images/icon.png",
-   "activationEvents": [
-      "onLanguage:kleio",
-      "onView:timelink.views.fileExplorer"
-   ],
-   "main": "./out/extension.js",
-   "contributes": {
-      "configuration": {
-         "type": "object",
-         "title": "Time Link",
-         "properties": {
-            "timelink.kleio.kleioServerHost": {
-               "type": "string",
-               "default": "localhost",
-               "description": "Kleio Server host. (Must set port and token too)"
-            },
-            "timelink.kleio.kleioServerPort": {
-               "type": "string",
-               "default": "8088",
-               "description": "Kleio Server port. (Must set host and token too)"
-            },
-            "timelink.kleio.kleioServerToken": {
-               "type": "string",
-               "default": "",
-               "description": "Kleio Server token. (Must set host and port too)"
-            },
-            "timelink.explorer.showAllFilesInExplorer": {
-               "type": "boolean",
-               "default": false,
-               "description": "Show all files in Time Link Explorer."
-            },
-            "timelink.explorer.collapsibleStateExpanded": {
-               "type": "boolean",
-               "default": false,
-               "description": "Launch Status Tree Views Expanded."
-            }
-         }
-      },
-      "menus": {
-         "view/title": [
-            {
-               "command": "extension.reloadTranslationInfo",
-               "group": "navigation",
-               "when": "view == timelink.views.fileExplorer || view == timelink.views.translationNeededExplorer || view == timelink.views.fileWithErrorsExplorer || view == timelink.views.fileWithWarningsExplorer || view == timelink.views.importReadyExplorer"
-            }
-         ],
-         "view/item/context": [
-            {
-               "command": "extension.translateFile",
-               "when": "viewItem == fileCli"
-            },
-            {
-               "command": "extension.deleteCliFile",
-               "when": "viewItem == fileCli"
-            },
-            {
-               "command": "extension.deleteGeneratedFiles",
-               "when": "viewItem == fileCli"
-            },
-            {
-               "command": "revealFileInOS"
-            }
-         ]
-      },
-      "languages": [
-         {
-            "id": "kleio",
-            "aliases": [
-               "Kleio",
-               "kleio"
-            ],
-            "extensions": [
-               ".cli",
-               ".kleio",
-               ".rpt",
-               ".CLI",
-               ".KLEIO",
-               ".org",
-               ".old"
-            ],
-            "configuration": "./language-configuration.json"
-         }
-      ],
-      "commands": [
-         {
-            "command": "extension.translateFile",
-            "title": "Translate File"
-         },
-         {
-            "command": "extension.deleteCliFile",
-            "title": "Delete"
-         },
-         {
-            "command": "extension.deleteGeneratedFiles",
-            "title": "Delete Generated Files"
-         },
-         {
-            "command": "revealFileInOS",
-            "title": "Open Containing Folder"
-         },
-         {
-            "command": "extension.reloadTranslationInfo",
-            "title": "Refresh",
-            "icon": {
-               "light": "resources/light/refresh.svg",
-               "dark": "resources/dark/refresh.svg"
-            }
-         }
-      ],
-      "grammars": [
-         {
-            "language": "kleio",
-            "scopeName": "source.kleio",
-            "path": "./syntaxes/Kleio.tmLanguage"
-         }
-      ],
-      "snippets": [
-         {
-            "language": "kleio",
-            "path": "./snippets/snippets.json"
-         }
-      ],
-      "keybindings": [
-         {
-            "key": "ctrl+alt+k",
-            "mac": "shift+cmd+k",
-            "command": "editor.action.insertSnippet",
-            "when": "editorTextFocus",
-            "args": {
-               "langId": "kleio",
-               "name": "kleio"
-            }
-         },
-         {
-            "key": "ctrl+alt+t",
-            "mac": "shift+cmd+t",
-            "command": "extension.translateFile",
-            "when": "editorTextFocus"
-         }
-      ],
-      "viewsContainers": {
-         "activitybar": [
-            {
-               "id": "timelink",
-               "title": "Time Link",
-               "icon": "images/icon_extension.svg"
-            }
-         ]
-      },
-      "views": {
-         "timelink": [
-            {
-               "id": "timelink.views.fileExplorer",
-               "name": "File Explorer"
-            },
-            {
-               "id": "timelink.views.translationNeededExplorer",
-               "name": "Translation needed"
-            },
-            {
-               "id": "timelink.views.fileWithErrorsExplorer",
-               "name": "With errors",
-               "visibility": "collapsed"
-            },
-            {
-               "id": "timelink.views.fileWithWarningsExplorer",
-               "name": "With warnings",
-               "visibility": "collapsed"
-            },
-            {
-               "id": "timelink.views.importReadyExplorer",
-               "name": "Ready for import",
-               "visibility": "collapsed"
-            }
-         ]
+  "name": "kleio",
+  "displayName": "Time Link Bundle (Web version)",
+  "description": "(Beta version for usage with VSCode Web) Time Link (formerly MHK / TimeLink) is a web application that manages databases for micro-historical research.",
+  "version": "1.9.0",
+  "publisher": "time-link",
+  "engines": {
+    "vscode": "^1.69.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/time-link/timelink-vscode.git"
+  },
+  "icon": "resources/icon.png",
+  "categories": [
+    "Extension Packs",
+    "Language Packs"
+  ],
+  "activationEvents": [
+    "onLanguage:kleio",
+    "onView:timelink.views.fileExplorer"
+  ],
+  "browser": "./dist/web/extension.js",
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Time Link",
+      "properties": {
+        "timelink.kleio.kleioServerUrl": {
+          "type": "string",
+          "default": "http://localhost:8088",
+          "description": "Kleio Server Url (Must set token too)."
+        },
+        "timelink.kleio.kleioServerToken": {
+          "type": "string",
+          "default": "",
+          "description": "Kleio Server token. (Must set host and port too)"
+        },
+        "timelink.kleio.kleioServerHome": {
+          "type": "string",
+          "default": "~/mhk-home/sources/",
+          "description": "Kleio Server Home."
+        },
+        "timelink.showAllFilesInExplorer": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show all files in Time Link Explorer."
+        },
+        "timelink.explorer.collapsibleStateExpanded": {
+          "type": "boolean",
+          "default": false,
+          "description": "Launch Status Tree Views Expanded."
+        }
       }
-   },
-   "scripts": {
-      "vscode:prepublish": "webpack --mode production",
-      "webpack": "webpack --mode development",
-      "webpack-dev": "webpack --mode development --watch",
-      "test-compile": "tsc -p ./",
-      "compile": "tsc -p ./",
-      "watch": "tsc -watch -p ./",
-      "pretest": "npm run compile",
-      "test": "node ./out/test/runTest.js"
-   },
-   "devDependencies": {
-      "@types/glob": "^7.1.1",
-      "@types/mkdirp": "^0.5.2",
-      "@types/mocha": "^5.2.6",
-      "@types/node": "^10.12.21",
-      "@types/rimraf": "^2.0.3",
-      "@types/vscode": "^1.38.0",
-      "glob": "^7.1.4",
-      "mocha": "^6.2.3",
-      "ts-loader": "^6.2.2",
-      "tslint": "^5.12.1",
-      "typescript": "^3.3.1",
-      "vscode-test": "^1.0.2",
-      "webpack": "^4.46.0",
-      "webpack-cli": "^3.3.12"
-   },
-   "dependencies": {
-      "jayson": "^3.2.0",
-      "request": "^2.88.0",
-      "request-promise": "^4.2.4"
-   }
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "extension.reloadTranslationInfo",
+          "group": "navigation",
+          "when": "view == timelink.views.fileExplorer || view == timelink.views.translationNeededExplorer || view == timelink.views.fileWithErrorsExplorer || view == timelink.views.fileWithWarningsExplorer || view == timelink.views.importReadyExplorer"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "extension.translateFile",
+          "when": "viewItem == fileCli"
+        },
+        {
+          "command": "extension.deleteCliFile",
+          "when": "viewItem == fileCli"
+        },
+        {
+          "command": "extension.deleteGeneratedFiles",
+          "when": "viewItem == fileCli"
+        },
+        {
+          "command": "revealFileInOS"
+        }
+      ]
+    },
+    "languages": [
+      {
+        "id": "kleio",
+        "aliases": [
+          "Kleio",
+          "kleio"
+        ],
+        "extensions": [
+          ".cli",
+          ".kleio",
+          ".rpt",
+          ".CLI",
+          ".KLEIO",
+          ".org",
+          ".old"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "extension.translateFile",
+        "title": "Translate File"
+      },
+      {
+        "command": "extension.deleteCliFile",
+        "title": "Delete"
+      },
+      {
+        "command": "extension.deleteGeneratedFiles",
+        "title": "Delete Generated Files"
+      },
+      {
+        "command": "revealFileInOS",
+        "title": "Open Containing Folder"
+      },
+      {
+        "command": "extension.reloadTranslationInfo",
+        "title": "Refresh",
+        "icon": {
+          "light": "resources/light/refresh.svg",
+          "dark": "resources/dark/refresh.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "kleio",
+        "scopeName": "source.kleio",
+        "path": "./syntaxes/Kleio.tmLanguage"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "kleio",
+        "path": "./snippets/snippets.json"
+      }
+    ],
+    "keybindings": [
+      {
+        "key": "ctrl+alt+k",
+        "mac": "shift+cmd+k",
+        "command": "editor.action.insertSnippet",
+        "when": "editorTextFocus",
+        "args": {
+          "langId": "kleio",
+          "name": "kleio"
+        }
+      },
+      {
+        "key": "ctrl+alt+t",
+        "mac": "shift+cmd+t",
+        "command": "extension.translateFile",
+        "when": "editorTextFocus"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "timelink",
+          "title": "Time Link",
+          "icon": "resources/icon_extension.svg"
+        }
+      ]
+    },
+    "views": {
+      "timelink": [
+        {
+          "id": "timelink.views.fileExplorer",
+          "name": "File Explorer"
+        },
+        {
+          "id": "timelink.views.translationNeededExplorer",
+          "name": "Translation needed"
+        },
+        {
+          "id": "timelink.views.fileWithErrorsExplorer",
+          "name": "With errors",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "timelink.views.fileWithWarningsExplorer",
+          "name": "With warnings",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "timelink.views.importReadyExplorer",
+          "name": "Ready for import",
+          "visibility": "collapsed"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "test": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/index.js",
+    "pretest": "npm run compile-web",
+    "vscode:prepublish": "npm run package-web",
+    "compile-web": "webpack",
+    "watch-web": "webpack --watch",
+    "package-web": "webpack --mode production --devtool hidden-source-map",
+    "lint": "eslint src --ext ts",
+    "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. ."
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.69.0",
+    "@types/mocha": "^9.1.1",
+    "eslint": "^8.20.0",
+    "@typescript-eslint/eslint-plugin": "^5.31.0",
+    "@typescript-eslint/parser": "^5.31.0",
+    "mocha": "^10.0.0",
+    "typescript": "^4.7.4",
+    "@vscode/test-web": "^0.0.29",
+    "ts-loader": "^9.3.1",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0",
+    "@types/webpack-env": "^1.17.0",
+    "assert": "^2.0.0",
+    "process": "^0.11.10"
+  },
+  "dependencies": {
+    "json-rpc-2.0": "^1.3.0",
+    "path-browserify": "^1.0.1"
+  }
 }

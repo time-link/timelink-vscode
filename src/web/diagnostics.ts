@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import { languages, Diagnostic, DiagnosticSeverity } from 'vscode';
 import * as path from 'path';
 import { KleioServiceModule } from './kleioService';
@@ -10,9 +9,8 @@ import { KleioServiceModule } from './kleioService';
 * More about on [Diagnostic](https://code.visualstudio.com/api/references/vscode-api#DiagnosticCollection)
 */
 export module DiagnosticsProvider {
-	
+
 	let kleioService = KleioServiceModule.KleioService.getInstance();
-	//let kleioService: KleioServiceModule.KleioService = new KleioServiceModule.KleioService();
 	let diagnosticCollection = languages.createDiagnosticCollection("kleio");
 	let diagnostics: Diagnostic[] = [];
 
@@ -35,23 +33,29 @@ export module DiagnosticsProvider {
 			});
 		}
 
-		loadErrorsForCli(filePath: string) {
+		async loadErrorsForCli(filePath: string) {
 			const cliFile = filePath;
 			const errFile = filePath.replace(path.extname(filePath), ".rpt");
-			if (fs.existsSync(errFile)) {
-				var errorDocument = fs.readFileSync(errFile, 'utf8');
-				vscode.workspace.openTextDocument(cliFile).then((cliDocument) => {
-					this.getDiagnosticsContent(cliDocument.uri, errorDocument, cliDocument.getText());
+
+			try {
+				// stat will throw an exception if file doesn't exist
+				const stat = await vscode.workspace.fs.stat(vscode.Uri.parse(errFile));
+				vscode.workspace.openTextDocument(errFile).then((errorDocument) => {
+					vscode.workspace.openTextDocument(cliFile).then((cliDocument) => {
+						this.getDiagnosticsContent(cliDocument.uri, errorDocument.getText(), cliDocument.getText());
+					});
 				});
+			} catch {
+				// ignored
 			}
 		}
 
-		onDidCreateOrChange(filePath: string) {
+		async onDidCreateOrChange(filePath: string) {
 			let errFilePath = filePath;
 			let cliFilePath = filePath.replace(path.extname(filePath), ".cli");
-			var cliFileStats = fs.statSync(cliFilePath);
-			var errFileStats = fs.statSync(errFilePath);
-			if (errFileStats.mtimeMs >= cliFileStats.mtimeMs) {
+			const cliFileStats = await vscode.workspace.fs.stat(vscode.Uri.parse(cliFilePath));
+			const errFileStats = await vscode.workspace.fs.stat(vscode.Uri.parse(errFilePath));
+			if (errFileStats.mtime >= cliFileStats.mtime) {
 				let message = "Kleio translation completed: " + path.basename(cliFilePath);
 				vscode.window.showInformationMessage(message);
 				this.loadErrorsForCli(cliFilePath);
@@ -63,12 +67,24 @@ export module DiagnosticsProvider {
 		//vscode.workspace.openTextDocument(errFile).then((errorDocument) => {
 		//	this.getDiagnosticsContent(document.uri, errorDocument.getText(), document.getText());
 		//});
-		onDidOpenTextDocument(document: vscode.TextDocument) {
+		async onDidOpenTextDocument(document: vscode.TextDocument) {
 			// open error .rpt file
-			const errFile = document.fileName.replace(path.extname(document.fileName), ".rpt");
-			if (fs.existsSync(errFile)) {
-				var errorDocument = fs.readFileSync(errFile, 'utf8');
-				this.getDiagnosticsContent(document.uri, errorDocument, document.getText());
+			//const errFile = FileSystemProvider.urlScheme.concat(document.fileName.replace(path.extname(document.uri.fsPath), ".rpt"));
+			const errFile = document.uri.scheme + "://" + document.uri.authority + document.fileName.replace(path.extname(document.uri.fsPath), ".rpt");
+
+			console.log('document.uri.fsPath ' + document.uri.fsPath);
+			console.log('document.uri.path ' + document.uri.path);
+			console.log('document.uri.scheme ' + document.uri.scheme);
+			console.log('document.uri.authority ' + document.uri.authority);
+			try {
+				// stat will throw an exception if file doesn't exist
+				await vscode.workspace.fs.stat(vscode.Uri.parse(errFile));
+				vscode.workspace.openTextDocument(vscode.Uri.parse(errFile)).then((errorDocument) => {
+					this.getDiagnosticsContent(document.uri, errorDocument.getText(), document.getText());
+				});
+			} catch (error) {
+				// ignored, file might not exist at all
+				console.log("Couldn't open err file " + errFile);
 			}
 		}
 
@@ -106,7 +122,7 @@ export module DiagnosticsProvider {
 						this.setDiagnosticsContent(cliDocumentUri, element, severity, line, start, docLines[line - 1].length); // docLines starts at zero! 
 					}
 				}
-				
+
 				if (diagnostics.length === 0) {
 					this.clearDiagnosticsContent(cliDocumentUri);
 				}
