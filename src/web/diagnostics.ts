@@ -18,8 +18,13 @@ export module DiagnosticsProvider {
 
 		constructor() { }
 
+		translateAllFiles(dir: string) {
+			return this.translateFile(kleioService.relativeUnixPath(dir) + "/");
+		}
+
 		translateFile(file: string) {
-			kleioService.translationsTranslate(file).then((response: any) => {
+			kleioService.translationsTranslate(file).then((response
+				: any) => {
 				if (!response.error) {
 					let message = "Kleio translation started: " + path.basename(file);
 					vscode.window.showInformationMessage(message);

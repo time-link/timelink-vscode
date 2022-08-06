@@ -108,6 +108,17 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(disposable);
 
+
+	// translate all files in directory
+	disposable = vscode.commands.registerCommand('extension.translateAllFiles', (event) => {
+		if (event) {
+			// command called via right click
+			diagnosticsProvider.translateAllFiles(event.uri.path);
+		}
+	});
+	context.subscriptions.push(disposable);
+
+
 	disposable = vscode.commands.registerCommand('extension.reloadTranslationInfo', (event) => {
 		fileExplorer.refresh();
 		kleioExplorer.refresh();

@@ -71,7 +71,7 @@ namespace _ {
 	}
 
 	export function stat(path: string, uriScheme: string): Promise<vscode.FileStat/*fs.Stats*/> {
-		console.log('stat ' + vscode.Uri.parse(uriScheme + path));
+		// console.log('stat ' + vscode.Uri.parse(uriScheme + path));
 		return new Promise<vscode.FileStat>(async (resolve, reject) => {
 			const stat = await vscode.workspace.fs.stat(vscode.Uri.parse(uriScheme + path));
 			handleResult(resolve, reject, null, stat);
@@ -668,6 +668,8 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 					treeItem.description = this.status_codes[file[0].status];
 				}
 			}
+		} else if (element.type === vscode.FileType.Directory) {
+			treeItem.contextValue = 'dirCli';
 		}
 		return treeItem;
 	}

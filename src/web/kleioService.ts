@@ -221,8 +221,10 @@ export module KleioServiceModule {
          * Returns relative path to MHK HOME
          */
         relativeUnixPath(stringPath: string): string {
+
             return path.normalize(this.pathToUnix(this.kleioHome.concat(stringPath.replace(this.mhkHome, ""))));
         }
+
 
         /**
          * Get a file. Obtains a link to download a file specified in the Path parameter
@@ -260,12 +262,12 @@ export module KleioServiceModule {
          */
         translationsTranslate(filePath: string): Promise<any> {
             let filePathNormalized = path.normalize(filePath);
-            if (!this.mhkHome || !filePathNormalized.includes(this.mhkHome)) {
-                console.log("MHK Home and File Path:");
-                console.log(this.mhkHome);
-                console.log(filePath);
-                throw new Error("File Path not in MHK Home");
-            }
+            // if (!this.mhkHome || !filePathNormalized.includes(this.mhkHome)) {
+            //     console.log("MHK Home and File Path:");
+            //     console.log(this.mhkHome);
+            //     console.log(filePath);
+            //     throw new Error("File Path not in MHK Home");
+            // }
 
             return new Promise<any>((resolve) => {
                 let params = {

@@ -75,6 +75,10 @@
           "when": "viewItem == fileCli"
         },
         {
+          "command": "extension.translateAllFiles",
+          "when": "viewItem == dirCli"
+        },
+        {
           "command": "revealFileInOS"
         }
       ]
@@ -112,6 +116,10 @@
         "title": "Delete Generated Files"
       },
       {
+        "command": "extension.translateAllFiles",
+        "title": "Translate All Files"
+      },
+      {
         "command": "revealFileInOS",
         "title": "Open Containing Folder"
       },
@@ -129,12 +137,6 @@
         "language": "kleio",
         "scopeName": "source.kleio",
         "path": "./syntaxes/Kleio.tmLanguage"
-      }
-    ],
-    "snippets": [
-      {
-        "language": "kleio",
-        "path": "./snippets/snippets.json"
       }
     ],
     "keybindings": [
