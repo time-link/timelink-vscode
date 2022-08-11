@@ -36,13 +36,13 @@ export module KleioServiceModule {
             return KleioService.instance;
         }
 
-        init() {
+        async init() {
             if (vscode.workspace.getConfiguration("timelink.kleio").kleioServerToken) {
                 console.log("Init Kleio Server with custom extension properties");
                 this.initJsonClient();
             } else {
                 console.log("Init Kleio Server with configuration properties");
-                this.loadAdminToken();
+                await this.loadAdminToken();
                 this.loadKleioParams();
             }
         }
@@ -89,13 +89,18 @@ export module KleioServiceModule {
         /**
          * Recursively finds file name in parent folder hierarchy
          */
-        findFile(currentPath: any, fileName: string): any {
+        async findFile(currentPath: any, fileName: string): Promise<any> {
             if (currentPath === path.sep) { // root folder, no mhk home found
                 return null;
-                // } 
-                // else if (fs.existsSync(path.join(currentPath, path.sep, fileName))) {
-                //     return currentPath;
             } else {
+                try {
+                    // stat will throw an exception if file doesn't exist
+                    await vscode.workspace.fs.stat(vscode.Uri.parse(path.join(currentPath, path.sep, fileName)));
+                    return currentPath;
+                } catch {
+                    // ignored
+                }
+
                 return this.findFile(path.dirname(currentPath), fileName);
             }
         }
@@ -116,18 +121,18 @@ export module KleioServiceModule {
             });
         }
 
-        findMHKHome(fsPath: any) {
+        async findMHKHome(fsPath: any) {
             console.log("MHK Home find in: " + fsPath);
             if (!this.mhkHome) {
                 // find .mhk file in hierarchy
                 // this doesn't work with the web extensions as we don't have full file access
-                this.mhkHome = this.findFile(fsPath, ".mhk-home");
+                this.mhkHome = await this.findFile(fsPath, ".mhk-home");
                 this.propertiesPath = "/system/conf/mhk_system.properties";
             }
 
             // couldn't file mhk-home, try with .mhk file
             if (!this.mhkHome) {
-                this.mhkHome = this.findFile(fsPath, ".mhk");
+                this.mhkHome = await this.findFile(fsPath, ".mhk");
                 this.propertiesPath = "/.mhk";
                 this.propertiesFile = ".mhk";
             }
@@ -149,7 +154,7 @@ export module KleioServiceModule {
             console.log('Loading Kleio Url from ' + this.mhkHome);
             return new Promise<string>(async (resolve) => {
                 if (vscode.workspace.workspaceFolders) {
-                    this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
+                    await this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
                     if (this.mhkHome) {
                         let propPath = path.join(this.mhkHome, this.propertiesPath);
 
@@ -188,9 +193,9 @@ export module KleioServiceModule {
         loadAdminToken(): Promise<string> {
             console.log('Loading admin token');
             // TODO: change this to load from repo
-            return new Promise<string>((resolve) => {
+            return new Promise<string>(async (resolve) => {
                 if (vscode.workspace.workspaceFolders) {
-                    this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
+                    await this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
                     if (this.mhkHome) {
                         let propPath = path.join(this.mhkHome, this.propertiesPath);
                         console.log(propPath);
@@ -230,12 +235,13 @@ export module KleioServiceModule {
          * Get a file. Obtains a link to download a file specified in the Path parameter
          */
         translationsGet(filePath: string, status: string = "") {
-            console.log("translationsGet " + filePath);
+            let filePathNormalized = this.relativeUnixPath(path.normalize(filePath));
 
-            let filePathNormalized = path.normalize(filePath);
+            console.log("translationsGet " + filePathNormalized);
+
             return new Promise<any>((resolve, reject) => {
                 let params = <any>{
-                    "path": filePathNormalized, // TODO: Pass correct filePath
+                    "path": filePathNormalized,
                     "recurse": "yes",
                     "token": this.token
                 };

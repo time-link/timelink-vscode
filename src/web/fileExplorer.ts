@@ -54,16 +54,16 @@ namespace _ {
 	}
 
 	export function readdir(fpath: string, uriScheme: string): Promise<string[]> {
-		console.log('readdir');
+		// console.log('readdir');
 		return new Promise<string[]>(async (resolve, reject) => {
-			console.log('readdir path ' + fpath);
-			console.log('readdir full path ' + vscode.Uri.parse(uriScheme + fpath));
+			// console.log('readdir path ' + fpath);
+			// console.log('readdir full path ' + vscode.Uri.parse(uriScheme + fpath));
 
 			// TODO How to list files in virtual file systems?
 			const entries = await vscode.workspace.fs.readDirectory(vscode.Uri.parse(uriScheme.concat(fpath))); // vscode-test-web
 
-			console.log('readdir entries' + entries);
-			entries.map(m => console.log(m));
+			// console.log('readdir entries' + entries);
+			// entries.map(m => console.log(m));
 
 			handleResult(resolve, reject, null, entries.map(m => m[0]));
 			//vscode.workspace.fs.readDirectory(path, (error, children) => handleResult(resolve, reject, error, normalizeNFC(children)));
@@ -71,7 +71,7 @@ namespace _ {
 	}
 
 	export function stat(path: string, uriScheme: string): Promise<vscode.FileStat/*fs.Stats*/> {
-		// console.log('stat ' + vscode.Uri.parse(uriScheme + path));
+		// // console.log('stat ' + vscode.Uri.parse(uriScheme + path));
 		return new Promise<vscode.FileStat>(async (resolve, reject) => {
 			const stat = await vscode.workspace.fs.stat(vscode.Uri.parse(uriScheme + path));
 			handleResult(resolve, reject, null, stat);
@@ -80,7 +80,7 @@ namespace _ {
 	}
 
 	export function readfile(path: string, uriScheme: string): Promise<Buffer> {
-		console.log('readfile');
+		// console.log('readfile');
 
 		return new Promise<Buffer>(async (resolve, reject) => {
 			const entry = await vscode.workspace.fs.readFile(vscode.Uri.parse(uriScheme + path));
@@ -89,7 +89,7 @@ namespace _ {
 	}
 
 	export function writefile(path: string, content: Buffer): Promise<void> {
-		console.log('writefile');
+		// console.log('writefile');
 		return new Promise<void>((resolve, reject) => {
 			// TODO: implement?
 			//fs.writeFile(path, content, error => handleResult(resolve, reject, error, void 0));
@@ -97,7 +97,7 @@ namespace _ {
 	}
 
 	export function exists(path: string): Promise<boolean> {
-		console.log('exists');
+		// console.log('exists');
 		return new Promise<boolean>(async (resolve, reject) => {
 			// TODO: check if this works
 			try {
@@ -133,6 +133,7 @@ namespace _ {
 	export function unlink(path: string): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			let uri = vscode.Uri.file(path);
+			// console.log('DELETE from path ' + path);
 			vscode.workspace.fs.delete(uri, { useTrash: true });
 			//fs.unlink(path, error => handleResult(resolve, reject, error, void 0));
 		});
@@ -227,7 +228,7 @@ export class KleioStatus {
 	public filterByStatus(uri: vscode.Uri, type: vscode.FileType, status?: string) {
 		//let uri = vscode.Uri.file(path.join(element.uri.path, name));
 		let file = this.getFiles().filter((el: { path: string; }) => uri.path.endsWith(el.path));
-		// console.log(">" + name);
+		// // console.log(">" + name);
 		if (type === vscode.FileType.Directory) {
 			return this;
 		} else if (file.length > 0 && file[0].status === status) {
@@ -250,16 +251,7 @@ export class KleioStatus {
 	 */
 	async _loadTranslationInfoStatus(fpath: string, caller: () => void) {
 		await this.kleioService.translationsGet(fpath).then((response) => {
-			console.log("Got Kleio Status: " + fpath);
-			// console.log(response);
-			// TODO: HANDLE errors
-			// if (!response.result) {
-			// 	console.log("Got Kleio ERROR");
-			// 	this.placeHolderMessage = "Kleio Server error.";
-			// 	caller();
-			// 	// console.error(response);
-			// 	return;
-			// }
+			// console.log("Got Kleio Status: " + fpath);
 
 			// replace existing files with new status
 			// this.files = this.files.concat(response.result.filter((item: any) => this.files.indexOf(item) < 0));
@@ -298,16 +290,19 @@ export class KleioStatus {
 					comps.pop();
 				}
 			});
-			console.log(this.files.length);
+			// console.log(this.files.length);
 			this.placeHolderMessage = "0 files"; // set default message for when result is empty
 			this.fetched.push(fpath);
 			caller();
-			console.log("LOADED status");
+			// console.log("LOADED status");
+		}).then(undefined, err => {
+			this.handleServerError(err);
+			caller();
 		});
 	}
 
 	loadTranslationInfoStatus(fpath: string, caller: () => void) {
-		console.log("Load Kleio Status: " + fpath);
+		// console.log("Load Kleio Status: " + fpath);
 		if (this.fetched.indexOf(fpath) < 0) {
 			this.placeHolderMessage = "Loading Status from Kleio Server…";
 			vscode.window.withProgress({
@@ -338,7 +333,7 @@ export class KleioStatus {
 	 * Loads Translation Info from Kleio Server
 	 */
 	loadTranslationInfo(fpath: string, caller: () => void) {
-		console.log("Load Kleio Info: " + fpath);
+		// console.log("Load Kleio Info: " + fpath);
 		if (fpath === "") {
 			this.clear();
 		}
@@ -374,8 +369,8 @@ export class KleioEntry extends vscode.TreeItem {
 			this.collapsibleState = vscode.TreeItemCollapsibleState.None;
 			this.contextValue = 'fileCli';
 			this.iconPath = {
-				light: path.join(__filename, '..', '..', 'resources', 'light', 'file.png'),
-				dark: path.join(__filename, '..', '..', 'resources', 'dark', 'file.png')
+				light: FileExplorer.lightIcon, // path.join(__filename, '..', '..', 'resources', 'light', 'file.png'),
+				dark: FileExplorer.darkIcon, //path.join(__filename, '..', '..', 'resources', 'dark', 'file.png')
 			};
 			this.command = { command: 'timelink.views.fileExplorer.openKleioFile', title: "Open File", arguments: [uri], };
 		}
@@ -390,8 +385,8 @@ export class PlaceholderEntry extends KleioEntry {
 		this.contextValue = 'PlaceholderEntry';
 		if (label !== '0 files') {
 			this.iconPath = {
-				light: path.join(__filename, '..', '..', 'resources', 'light', 'warning.png'),
-				dark: path.join(__filename, '..', '..', 'resources', 'dark', 'warning.png')
+				light: FileExplorer.warningDarkIcon, // path.join(__filename, '..', '..', 'resources', 'light', 'warning.png'),
+				dark: FileExplorer.warningLightIcon, // path.join(__filename, '..', '..', 'resources', 'dark', 'warning.png')
 			};
 		}
 	}
@@ -409,16 +404,6 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 	protected showAllFilesExplorer = false;
 
 	public static urlScheme = "";
-
-	protected lightIcon = vscode.Uri.from({
-		scheme: "data",
-		path: 'image/svg+xml;utf8,<svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="200.000000pt" height="200.000000pt" viewBox="0 0 200.000000 200.000000" preserveAspectRatio="xMidYMid meet"><g transform="translate(0.000000,200.000000) scale(0.100000,-0.100000)" fill="#000000" stroke="none"><path d="M742 1649 c-88 -44 -125 -155 -82 -243 40 -83 118 -120 215 -102 43 8 103 59 121 103 18 42 18 112 0 154 -40 94 -158 135 -254 88z m169 -22 c53 -35 79 -82 79 -139 0 -89 -41 -144 -125 -167 -73 -20 -165 27 -195 99 -17 41 -8 125 17 158 54 74 155 96 224 49z"/><path d="M901 1279 c-1 -3 15 -46 34 -95 19 -49 35 -93 35 -99 0 -5 -15 -19 -33 -31 -41 -27 -86 -91 -98 -141 -5 -21 -6 -65 -3 -98 5 -56 4 -61 -18 -71 -33 -15 -191 -114 -203 -126 -5 -6 10 1 35 14 25 14 80 44 123 67 l78 42 42 -44 c60 -63 99 -81 177 -81 47 0 76 6 106 21 57 30 112 95 126 149 l13 47 98 -6 c54 -3 96 -3 93 0 -2 3 -46 10 -98 16 l-93 12 -7 42 c-9 54 -28 90 -70 130 -46 45 -96 63 -175 64 l-68 0 -47 97 c-25 53 -47 94 -47 91z m237 -214 c94 -28 152 -109 152 -212 0 -96 -39 -159 -125 -199 -90 -42 -184 -25 -252 47 -85 89 -81 233 8 314 21 19 45 35 53 35 7 0 27 7 42 15 37 19 58 19 122 0z"/><path d="M1709 1000 c-65 -19 -119 -84 -133 -158 -20 -113 85 -232 205 -232 44 0 128 49 156 91 31 47 41 121 23 173 -33 102 -146 158 -251 126z m139 -24 c31 -16 74 -61 91 -93 17 -34 13 -114 -8 -153 -48 -89 -147 -123 -236 -80 -173 84 -114 340 78 340 26 0 60 -6 75 -14z"/><path d="M426 659 c-82 -23 -121 -123 -76 -196 55 -91 195 -81 234 17 20 51 20 55 -4 105 -29 60 -94 92 -154 74z m107 -40 c39 -30 53 -85 34 -131 -49 -117 -217 -84 -217 42 0 67 43 109 111 110 32 0 54 -6 72 -21z"/></g></svg>'
-	});
-
-	protected darkIcon = vscode.Uri.from({
-		scheme: "data",
-		path: 'image/svg+xml;utf8,<svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="200.000000pt" height="200.000000pt" viewBox="0 0 200.000000 200.000000" preserveAspectRatio="xMidYMid meet"><g transform="translate(0.000000,200.000000) scale(0.100000,-0.100000)" fill="#FFFFFF" stroke="none"><path d="M742 1649 c-88 -44 -125 -155 -82 -243 40 -83 118 -120 215 -102 43 8 103 59 121 103 18 42 18 112 0 154 -40 94 -158 135 -254 88z m169 -22 c53 -35 79 -82 79 -139 0 -89 -41 -144 -125 -167 -73 -20 -165 27 -195 99 -17 41 -8 125 17 158 54 74 155 96 224 49z"/><path d="M901 1279 c-1 -3 15 -46 34 -95 19 -49 35 -93 35 -99 0 -5 -15 -19 -33 -31 -41 -27 -86 -91 -98 -141 -5 -21 -6 -65 -3 -98 5 -56 4 -61 -18 -71 -33 -15 -191 -114 -203 -126 -5 -6 10 1 35 14 25 14 80 44 123 67 l78 42 42 -44 c60 -63 99 -81 177 -81 47 0 76 6 106 21 57 30 112 95 126 149 l13 47 98 -6 c54 -3 96 -3 93 0 -2 3 -46 10 -98 16 l-93 12 -7 42 c-9 54 -28 90 -70 130 -46 45 -96 63 -175 64 l-68 0 -47 97 c-25 53 -47 94 -47 91z m237 -214 c94 -28 152 -109 152 -212 0 -96 -39 -159 -125 -199 -90 -42 -184 -25 -252 47 -85 89 -81 233 8 314 21 19 45 35 53 35 7 0 27 7 42 15 37 19 58 19 122 0z"/><path d="M1709 1000 c-65 -19 -119 -84 -133 -158 -20 -113 85 -232 205 -232 44 0 128 49 156 91 31 47 41 121 23 173 -33 102 -146 158 -251 126z m139 -24 c31 -16 74 -61 91 -93 17 -34 13 -114 -8 -153 -48 -89 -147 -123 -236 -80 -173 84 -114 340 78 340 26 0 60 -6 75 -14z"/><path d="M426 659 c-82 -23 -121 -123 -76 -196 55 -91 195 -81 234 17 20 51 20 55 -4 105 -29 60 -94 92 -154 74z m107 -40 c39 -30 53 -85 34 -131 -49 -117 -217 -84 -217 42 0 67 43 109 111 110 32 0 54 -6 72 -21z"/></g></svg>'
-	});
 
 	protected status?: string; // translation status flag
 	protected dirStatus: string[] = []; // store fetched control folders
@@ -444,13 +429,6 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 	// https://github.com/Microsoft/vscode/issues/62798
 	public refresh(): any {
 		this._onDidChangeTreeData.fire(undefined);
-		// only currently expanded nodes
-		/*for (let i = 0; i < this.dirStatus.length; i++) {
-			const child = this.dirStatus[i];
-			this.kleioStatus.loadTranslationInfo(child, ()=>{
-				this._onDidChangeTreeData.fire();
-			});
-		}*/
 	}
 
 	public fire(): any {
@@ -462,7 +440,7 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 	}
 
 	watch(uri: vscode.Uri, options: { recursive: boolean; excludes: string[]; }): vscode.Disposable {
-		console.log('watch');
+		// console.log('watch');
 		/* const watcher = fs.watch(uri.fsPath, { recursive: options.recursive }, async (event: string, filename: string | Buffer) => {
 			const filepath = path.join(uri.fsPath, _.normalizeNFC(filename.toString()));
 
@@ -497,7 +475,7 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 			const child = children[i];
 			const stat = await this._stat(path.join(uri.path, child));
 			if (!child.startsWith(".")) {
-				// console.log("stat.type " + stat.type);
+				// // console.log("stat.type " + stat.type);
 				if (stat.type === vscode.FileType.Directory) {
 					result.push([child, stat.type]);
 				} else {
@@ -590,16 +568,16 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 
 		// workspace root folders
 		if (vscode.workspace.workspaceFolders !== undefined) {
-			console.log(vscode.workspace.workspaceFolders);
+			// console.log(vscode.workspace.workspaceFolders);
 
 			//const workspaceFolder = vscode.workspace.workspaceFolders.filter(folder => folder.uri.scheme === 'file')[0];
 			// const workspaceFolder = vscode.workspace.workspaceFolders.filter(folder => (folder.uri.scheme === 'vscode-test-web' || folder.uri.scheme === 'file'))[0];
 			const workspaceFolder = vscode.workspace.workspaceFolders[0];
 
-			console.log('uri scheme' + workspaceFolder.uri.scheme);
+			// console.log('uri scheme' + workspaceFolder.uri.scheme);
 
 			if (workspaceFolder) {
-				console.log('read workspaceFolder');
+				// console.log('read workspaceFolder');
 				const workspaceFolder = vscode.workspace.workspaceFolders[0];
 				FileSystemProvider.urlScheme = workspaceFolder.uri.scheme + "://" + workspaceFolder.uri.authority;
 
@@ -622,7 +600,7 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 				});*/
 
 				children = this.sortByAlphabeticalOrder(children);
-				console.log(children);
+				// console.log(children);
 
 				return children.map(([name, type]) => ({
 					uri: vscode.Uri.file(path.join(workspaceFolder.uri.path, name)), type
@@ -658,8 +636,8 @@ export class FileSystemProvider implements vscode.TreeDataProvider<Entry>, vscod
 
 				// change icon
 				treeItem.iconPath = {
-					light: this.lightIcon,
-					dark: this.darkIcon
+					light: FileExplorer.lightIcon,
+					dark: FileExplorer.darkIcon
 				};
 
 				// get file status from kleio server
@@ -703,7 +681,7 @@ export class KleioStatusProvider extends FileSystemProvider implements vscode.Tr
 
 		const children = await _.readdir(uri.path, FileSystemProvider.urlScheme);
 		const result: [string, vscode.FileType][] = [];
-		const dirs = this.kleioStatus.getCachedDirs()[this.status!];
+		const cachedDirs = this.kleioStatus.getCachedDirs()[this.status!];
 		for (let i = 0; i < children.length; i++) {
 			const child = children[i];
 			const fpath = path.join(uri.path, child);
@@ -711,7 +689,7 @@ export class KleioStatusProvider extends FileSystemProvider implements vscode.Tr
 			if (!child.startsWith(".")) {
 				if (stat.type === vscode.FileType.Directory) {
 					// TODO: why do I need to add / before?
-					if (dirs && dirs.indexOf("/" + this.kleioService.relativeUnixPath(fpath)) >= 0) {
+					if (cachedDirs && cachedDirs.indexOf(this.kleioService.relativeUnixPath(fpath)) >= 0) {
 						result.push([child, stat.type]);
 					}
 				} else {
@@ -728,7 +706,7 @@ export class KleioStatusProvider extends FileSystemProvider implements vscode.Tr
 		// get element children
 		if (element) {
 			var elementChildren = (await this.readDirectory(element.uri));
-			console.log('getChildren');
+			// console.log('getChildren');
 			// fetch translation info from kleio server for non fetched folders only
 			if (this.dirStatus.indexOf(element.uri.path) < 0) {
 				this.dirStatus.push(element.uri.path);
@@ -754,12 +732,12 @@ export class KleioStatusProvider extends FileSystemProvider implements vscode.Tr
 			// const workspaceFolder = vscode.workspace.workspaceFolders.filter(folder => (folder.uri.scheme === 'vscode-test-web' || folder.uri.scheme === 'file'))[0];
 			const workspaceFolder = vscode.workspace.workspaceFolders[0];
 
-			console.log('get workspace root folders');
+			// console.log('get workspace root folders');
 
 			FileSystemProvider.urlScheme = workspaceFolder.uri.scheme + "://" + workspaceFolder.uri.authority;
-			console.log('urlScheme' + FileSystemProvider.urlScheme);
+			// console.log('urlScheme' + FileSystemProvider.urlScheme);
 
-			console.log('uri' + workspaceFolder.uri.scheme);
+			// console.log('uri' + workspaceFolder.uri.scheme);
 			vscode.window.showInformationMessage('workspaceFolder.uri.scheme', workspaceFolder.uri.scheme);
 
 			var workspaceFolderChildren = (await this.readDirectory(workspaceFolder.uri));
@@ -806,7 +784,7 @@ export class KleioStatusExplorer {
 	private importReadyDataProvider: KleioStatusProvider;
 
 	constructor(context: vscode.ExtensionContext) {
-		console.log('KleioStatusExplorer init');
+		// console.log('KleioStatusExplorer init');
 		var treeDataProvider = new KleioStatusProvider("T");
 		this.translationNeededDataProvider = treeDataProvider;
 		vscode.window.createTreeView('timelink.views.translationNeededExplorer', { treeDataProvider });
@@ -825,12 +803,10 @@ export class KleioStatusExplorer {
 
 		vscode.commands.registerCommand('timelink.views.fileExplorer.openKleioFile', (resource) => this.openResource(resource));
 
-		this.refresh();
-
-		// this.kleioService.loadAdminToken().then(() => {
-		// 	console.log("Loaded Admin Token");
-		// 	this.refresh();
-		// });
+		this.kleioService.loadAdminToken().then(() => {
+			// console.log("Loaded Admin Token");
+			this.refresh();
+		});
 	}
 
 	private openResource(resource: vscode.Uri): void {
@@ -840,7 +816,7 @@ export class KleioStatusExplorer {
 	public refresh(fspath?: string): void {
 		if (fspath) { // fspath, will update only one kleio path
 			var relativePath = path.dirname(this.kleioService.relativeUnixPath(fspath));
-			console.log("relativePath " + relativePath);
+			// console.log("relativePath " + relativePath);
 			// remove passed path from list of fetched paths
 			this.kleioStatus.removeFromFetched(relativePath);
 			this.kleioStatus.loadTranslationInfoStatus(relativePath, () => {
@@ -854,7 +830,7 @@ export class KleioStatusExplorer {
 			if (vscode.workspace.workspaceFolders !== undefined) {
 				vscode.workspace.workspaceFolders.filter(folder => folder.uri.scheme === 'file').forEach(folder => {
 					var relativePath = this.kleioService.relativeUnixPath(folder.uri.fsPath);
-					console.log("relativePath " + relativePath);
+					// console.log("relativePath " + relativePath);
 					this.kleioStatus.loadTranslationInfoStatus(relativePath, () => {
 						this.translationNeededDataProvider.refresh();
 						this.fileWithWarningsDataProvider.refresh();
@@ -869,6 +845,26 @@ export class KleioStatusExplorer {
 
 export class FileExplorer {
 	private fullTreeDataProvider: FileSystemProvider;
+
+	static warningDarkIcon = vscode.Uri.from({
+		scheme: "data",
+		path: 'image/svg+xml;utf8,<svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="200.000000pt" height="200.000000pt" viewBox="0 0 200.000000 200.000000" preserveAspectRatio="xMidYMid meet"> <g transform="translate(0.000000,200.000000) scale(0.100000,-0.100000)" fill="#000000" stroke="none"> <path d="M1054 1711 c-46 -28 -755 -1206 -761 -1265 -5 -51 20 -102 67 -134 l33 -22 742 0 742 0 34 23 c21 14 41 41 53 70 19 45 19 51 5 91 -8 23 -174 306 -369 630 -270 447 -362 592 -386 607 -41 25 -118 25 -160 0z m96 -91 c18 -10 708 -1143 717 -1179 2 -10 -3 -25 -12 -35 -15 -15 -79 -16 -716 -16 -464 0 -707 3 -720 10 -10 6 -19 19 -19 30 0 20 694 1180 714 1192 14 10 14 10 36 -2z"/><path d="M1079 1259 c-20 -20 -20 -27 -13 -212 9 -248 12 -269 46 -281 18 -6 35 -6 51 1 24 11 25 17 31 135 3 68 9 171 12 229 6 100 5 108 -15 128 -28 28 -84 28 -112 0z"/><path d="M1096 654 c-35 -34 -8 -104 41 -104 32 0 58 37 54 77 -2 20 -31 43 -56 43 -13 0 -31 -7 -39 -16z"/></g></svg>'
+	});
+
+	static warningLightIcon = vscode.Uri.from({
+		scheme: "data",
+		path: 'image/svg+xml;utf8,<svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="200.000000pt" height="200.000000pt" viewBox="0 0 200.000000 200.000000" preserveAspectRatio="xMidYMid meet"> <g transform="translate(0.000000,200.000000) scale(0.100000,-0.100000)" fill="#FFFFFF" stroke="none"> <path d="M1054 1711 c-46 -28 -755 -1206 -761 -1265 -5 -51 20 -102 67 -134 l33 -22 742 0 742 0 34 23 c21 14 41 41 53 70 19 45 19 51 5 91 -8 23 -174 306 -369 630 -270 447 -362 592 -386 607 -41 25 -118 25 -160 0z m96 -91 c18 -10 708 -1143 717 -1179 2 -10 -3 -25 -12 -35 -15 -15 -79 -16 -716 -16 -464 0 -707 3 -720 10 -10 6 -19 19 -19 30 0 20 694 1180 714 1192 14 10 14 10 36 -2z"/><path d="M1079 1259 c-20 -20 -20 -27 -13 -212 9 -248 12 -269 46 -281 18 -6 35 -6 51 1 24 11 25 17 31 135 3 68 9 171 12 229 6 100 5 108 -15 128 -28 28 -84 28 -112 0z"/><path d="M1096 654 c-35 -34 -8 -104 41 -104 32 0 58 37 54 77 -2 20 -31 43 -56 43 -13 0 -31 -7 -39 -16z"/></g></svg>'
+	});
+
+	static lightIcon = vscode.Uri.from({
+		scheme: "data",
+		path: 'image/svg+xml;utf8,<svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="200.000000pt" height="200.000000pt" viewBox="0 0 200.000000 200.000000" preserveAspectRatio="xMidYMid meet"><g transform="translate(0.000000,200.000000) scale(0.100000,-0.100000)" fill="#000000" stroke="none"><path d="M742 1649 c-88 -44 -125 -155 -82 -243 40 -83 118 -120 215 -102 43 8 103 59 121 103 18 42 18 112 0 154 -40 94 -158 135 -254 88z m169 -22 c53 -35 79 -82 79 -139 0 -89 -41 -144 -125 -167 -73 -20 -165 27 -195 99 -17 41 -8 125 17 158 54 74 155 96 224 49z"/><path d="M901 1279 c-1 -3 15 -46 34 -95 19 -49 35 -93 35 -99 0 -5 -15 -19 -33 -31 -41 -27 -86 -91 -98 -141 -5 -21 -6 -65 -3 -98 5 -56 4 -61 -18 -71 -33 -15 -191 -114 -203 -126 -5 -6 10 1 35 14 25 14 80 44 123 67 l78 42 42 -44 c60 -63 99 -81 177 -81 47 0 76 6 106 21 57 30 112 95 126 149 l13 47 98 -6 c54 -3 96 -3 93 0 -2 3 -46 10 -98 16 l-93 12 -7 42 c-9 54 -28 90 -70 130 -46 45 -96 63 -175 64 l-68 0 -47 97 c-25 53 -47 94 -47 91z m237 -214 c94 -28 152 -109 152 -212 0 -96 -39 -159 -125 -199 -90 -42 -184 -25 -252 47 -85 89 -81 233 8 314 21 19 45 35 53 35 7 0 27 7 42 15 37 19 58 19 122 0z"/><path d="M1709 1000 c-65 -19 -119 -84 -133 -158 -20 -113 85 -232 205 -232 44 0 128 49 156 91 31 47 41 121 23 173 -33 102 -146 158 -251 126z m139 -24 c31 -16 74 -61 91 -93 17 -34 13 -114 -8 -153 -48 -89 -147 -123 -236 -80 -173 84 -114 340 78 340 26 0 60 -6 75 -14z"/><path d="M426 659 c-82 -23 -121 -123 -76 -196 55 -91 195 -81 234 17 20 51 20 55 -4 105 -29 60 -94 92 -154 74z m107 -40 c39 -30 53 -85 34 -131 -49 -117 -217 -84 -217 42 0 67 43 109 111 110 32 0 54 -6 72 -21z"/></g></svg>'
+	});
+
+	static darkIcon = vscode.Uri.from({
+		scheme: "data",
+		path: 'image/svg+xml;utf8,<svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="200.000000pt" height="200.000000pt" viewBox="0 0 200.000000 200.000000" preserveAspectRatio="xMidYMid meet"><g transform="translate(0.000000,200.000000) scale(0.100000,-0.100000)" fill="#FFFFFF" stroke="none"><path d="M742 1649 c-88 -44 -125 -155 -82 -243 40 -83 118 -120 215 -102 43 8 103 59 121 103 18 42 18 112 0 154 -40 94 -158 135 -254 88z m169 -22 c53 -35 79 -82 79 -139 0 -89 -41 -144 -125 -167 -73 -20 -165 27 -195 99 -17 41 -8 125 17 158 54 74 155 96 224 49z"/><path d="M901 1279 c-1 -3 15 -46 34 -95 19 -49 35 -93 35 -99 0 -5 -15 -19 -33 -31 -41 -27 -86 -91 -98 -141 -5 -21 -6 -65 -3 -98 5 -56 4 -61 -18 -71 -33 -15 -191 -114 -203 -126 -5 -6 10 1 35 14 25 14 80 44 123 67 l78 42 42 -44 c60 -63 99 -81 177 -81 47 0 76 6 106 21 57 30 112 95 126 149 l13 47 98 -6 c54 -3 96 -3 93 0 -2 3 -46 10 -98 16 l-93 12 -7 42 c-9 54 -28 90 -70 130 -46 45 -96 63 -175 64 l-68 0 -47 97 c-25 53 -47 94 -47 91z m237 -214 c94 -28 152 -109 152 -212 0 -96 -39 -159 -125 -199 -90 -42 -184 -25 -252 47 -85 89 -81 233 8 314 21 19 45 35 53 35 7 0 27 7 42 15 37 19 58 19 122 0z"/><path d="M1709 1000 c-65 -19 -119 -84 -133 -158 -20 -113 85 -232 205 -232 44 0 128 49 156 91 31 47 41 121 23 173 -33 102 -146 158 -251 126z m139 -24 c31 -16 74 -61 91 -93 17 -34 13 -114 -8 -153 -48 -89 -147 -123 -236 -80 -173 84 -114 340 78 340 26 0 60 -6 75 -14z"/><path d="M426 659 c-82 -23 -121 -123 -76 -196 55 -91 195 -81 234 17 20 51 20 55 -4 105 -29 60 -94 92 -154 74z m107 -40 c39 -30 53 -85 34 -131 -49 -117 -217 -84 -217 42 0 67 43 109 111 110 32 0 54 -6 72 -21z"/></g></svg>'
+	});
 
 	constructor(context: vscode.ExtensionContext) {
 		var treeDataProvider = new FileSystemProvider();

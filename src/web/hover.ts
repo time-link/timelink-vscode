@@ -37,7 +37,7 @@ export module HoverProvider {
         docJson = context.workspaceState.get(docJsonKey) as object;
       }).catch(function (err: any) {
         console.log("Couldn't update json");
-      });;
+      });
     }
 
     // get key value from json data
