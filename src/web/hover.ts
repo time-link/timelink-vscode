@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import docJsonFile from './StructureDocumentation.json';
+import docJsonFile from './gacto2.str.json';
 
 export module HoverProvider {
   const docJsonKey = "DocJsonKey";
