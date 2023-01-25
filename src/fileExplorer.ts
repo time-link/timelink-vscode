@@ -773,7 +773,8 @@ export class KleioStatusExplorer {
 			KleioStatus.getInstance().clear();
 			if (vscode.workspace.workspaceFolders !== undefined) {
 				vscode.workspace.workspaceFolders.filter(folder => folder.uri.scheme === 'file').forEach(folder => {
-					var relativePath = this.kleioService.relativeUnixPath(folder.uri.fsPath);
+					//var relativePath = this.kleioService.relativeUnixPath(folder.uri.fsPath);
+					var relativePath = this.kleioService.relativeUnixPath(this.kleioService.mhkHome);
 					this.kleioStatus.loadTranslationInfoStatus(relativePath, () => {
 						this.translationNeededDataProvider.refresh();
 						this.fileWithWarningsDataProvider.refresh();
