@@ -133,10 +133,12 @@ export module KleioServiceModule {
 
         findMHKHome(fsPath: any) {
             if (this.mhkHome && this.kleioTokenValue && this.kleioUrlValue) {
-                console.log("=========== KleioService =============")
-                console.log("           mhkHome: " + this.mhkHome);
-                console.log("     kleioUrlValue: " + this.kleioUrlValue);
-                console.log("   kleioTokenValue: " + this.kleioTokenValue);
+                console.log("=========== KleioService Pars =============")
+                console.log("mhkHome: " + this.mhkHome);
+                console.log("kleioUrlValue: " + this.kleioUrlValue);
+                // set vtoken to first 5 chars of kleioTokenValue or "none" if null
+                let vtoken = this.kleioTokenValue ? this.kleioTokenValue.substring(0,4) : "Not set";
+                console.log("kleioTokenValue: " + vtoken + "...");
                 console.log("propertiesFullPath: " + this.propertiesFullPath);
 
             } 
@@ -213,6 +215,7 @@ export module KleioServiceModule {
                                 path: this.urlPath,
                                 port: this.kleioPort
                             });
+                            console.log("Sucessfully connects to " + this.kleioUrlValue)
                         } catch (error) {
                             vscode.window.showErrorMessage("Error while connecting Kleio Server url at "+this.kleioUrlValue);
                             console.log(error);
@@ -283,6 +286,8 @@ export module KleioServiceModule {
         translationsGet(filePath: string, status: string = "") {
             let filePathNormalized = path.normalize(filePath);
             return new Promise<any>((resolve, reject) => {
+                console.log("Requesting file status of " + 
+                this.relativeUnixPath(filePathNormalized))
                 let params = <any>{
                     "path": this.relativeUnixPath(filePathNormalized),
                     "recurse": "yes",
@@ -306,6 +311,7 @@ export module KleioServiceModule {
          */
         translationsTranslate(filePath: string): Promise<any> {
             let filePathNormalized = path.normalize(filePath);
+            console.log("Requesting translation of " + filePathNormalized)
             if (!this.mhkHome || !filePathNormalized.includes(this.mhkHome)) {
                 throw new Error("File Path not in MHK Home");
             }

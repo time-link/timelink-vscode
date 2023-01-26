@@ -23,6 +23,26 @@ This bundle requires Visual Studio Code with extensions support.
 
 ## Development Notes
 
+### [NEW] Use a dev container for development
+
+This repository includes a `.devcontainer` specification
+that allows the development to be done inside a virtual machine. 
+
+To run the dev container the VS Code `Dev Containers` extensions is necessary.
+
+When the repository is opened VS Code detects
+the `.devcontainer` folder and sugests to
+reopen the repository inside de container.
+
+_The first time this is done the docker
+container is created and the dependencies
+are installed, which takes a long time. 
+Subsequent runs are very fast._
+
+ See https://code.visualstudio.com/docs/devcontainers/containers
+
+
+
 ### Adding New Features
 
 The grammar was converted from TextMate using the yo code extension generator. The included Time Link bundle (Time Link.tmbundle) can be used to easily make changes to the TextMate grammar, and then convert the bundle to a VSCode extension.
@@ -36,8 +56,9 @@ npm install -g yo generator-code
 ### Create a package:
 #### Create a package using vsce (The Visual Studio Code Extension Manager)
 
-Install typescript and extension dependencies:
-
+Install typescript and extension dependencies
+(_if runing in a `dev container`,as explained
+above the dependencies are already installed_):
 ```console
 foo@bar:~$ npm install -g typescript
 foo@bar:~$ npm install -g vsce
@@ -67,6 +88,24 @@ foo@bar:~$ vsce login time-link
 
 More info at https://code.visualstudio.com/api/working-with-extensions/publishing-extension
 
+#### Note
+Currently there is an incompatibility between node and some modules used in the extension
+which produces the following error on `vsce package`
+
+        opensslErrorStack: [ 'error:03000086:digital envelope routines::initialization error' ],
+        library: 'digital envelope routines',
+        reason: 'unsupported',
+        code: 'ERR_OSSL_EVP_UNSUPPORTED'
+
+See https://stackoverflow.com/questions/69665222/node-js-17-0-1-gatsby-error-digital-envelope-routinesunsupported-err-os
+
+This is fixed by doing `export NODE_OPTIONS=--openssl-legacy-provider` 
+
+The export command was added to the scripts in `package.json`.
+
+In the future is dependencies are updated
+this can be removed from `package.json`.
+
 #### Convert TextMate bundle features using [Yeoman](https://yeoman.io/learning/) code extension generator:
 
 ```console
@@ -95,6 +134,69 @@ Keybindings must be added manually to package.json file to 'keybindings' section
     "name": "kleio"
 }
 ```
+
+## Test with a reference version of MHK
+
+A reference version of MHH can be installed
+inside the devcontainer to provide a 
+reproductible environment. 
+
+The reference version contains the
+a full mhk-home directory capable of
+launcing MHK and the Kleio server.
+
+1. Run the extension host from VS Code
+with FN5.
+2. In the new "Extension Development Host" 
+window select "Clone Git Repository"
+3. Clone http://github.com/joaquimrcarvalho/timelink-project
+4. When asked, open the cloned repository in
+a new window.
+5. Set up MHK with 
+
+```console
+$ cd mhk-home; . ./app/scripts/host/manager-init.sh
+>Initializing mhk-home ...
+Init already called in this directory:  Tue Jan 24 07:57:53 UTC 2023
+Updating
+mhk-home init finished.
+```
+Open a new terminal in VS Code and do
+
+```console 
+$ mhk up
+>  mhk up
+Using images tagged '2133'
+MHk serving localhost
+[+] Running 5/5
+ ⠿ Container mhk-portainer-1  Started                        0.5s
+ ⠿ Container mhk-mysql-1      Sta...                         0.5s
+ ⠿ Container mhk-kleio-1      Sta...                         0.6s
+ ⠿ Container mhk-mhk-1        Start...                       0.9s
+ ⠿ Container mhk-caddy-1      Sta...   
+```
+The extension can now be tested with 
+a running MHK reference version.
+
+A good way to check if the kleio server is running 
+if to do in the Extension Development Host window:
+
+```console
+$ curl http://localhost:8088
+> 
+
+Different versions of MHK can also be tested
+by:
+1. `mhk use-tag <BUILD_NUMBER>`
+2. `mhk update`
+3. `mhk up`
+
+For an update list of build number and 
+MHK versions see: https://hub.docker.com/r/joaquimrcarvalho/mhk-manager/tags
+
+The cloned MHK version can be updated this way, with no need use git 
+for an updated version of the reference MHK version.
+
 
 ## Known Issues
 
