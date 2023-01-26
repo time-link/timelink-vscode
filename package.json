@@ -12,10 +12,10 @@
     "Language Packs"
   ],
   "description": "Time Link (formerly MHK / TimeLink) is a web application that manages databases for micro-historical research.",
-  "version": "1.0.9",
+  "version": "1.0.18",
   "publisher": "time-link",
   "engines": {
-    "vscode": "^1.38.0"
+    "vscode": "^1.63.0"
   },
   "repository": {
     "type": "git",
@@ -216,7 +216,8 @@
     "typescript": "^3.3.1",
     "vscode-test": "^1.0.2",
     "webpack": "^4.46.0",
-    "webpack-cli": "^3.3.12"
+    "webpack-cli": "^3.3.12",
+    "@vscode/vsce": "latest"
   },
   "dependencies": {
     "jayson": "^3.2.0",

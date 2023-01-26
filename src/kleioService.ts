@@ -31,8 +31,8 @@ export module KleioServiceModule {
         // property name used in HOME/.mhk to indicate path to mhk-home
         private mhkHomePropUserHome = "kleio_token";
         // values in the current instalation read from the props above
-        private kleioUrlValue: string | null = "";
-        private kleioTokenValue: string | null = "";
+        private kleioUrlValue: string | null = null;
+        private kleioTokenValue: string | null = null;
         private urlPath: string = "/json/";
 
         // client with default properties... 
@@ -132,12 +132,13 @@ export module KleioServiceModule {
         }
 
         findMHKHome(fsPath: any) {
-            if (this.mhkHome) {
+            if (this.mhkHome && this.kleioTokenValue && this.kleioUrlValue) {
                 console.log("=========== KleioService =============")
                 console.log("           mhkHome: " + this.mhkHome);
                 console.log("     kleioUrlValue: " + this.kleioUrlValue);
                 console.log("   kleioTokenValue: " + this.kleioTokenValue);
                 console.log("propertiesFullPath: " + this.propertiesFullPath);
+
             } 
             else{
                 // find .mhk file in hierarchy
