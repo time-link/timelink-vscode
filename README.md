@@ -88,23 +88,6 @@ foo@bar:~$ vsce login time-link
 
 More info at https://code.visualstudio.com/api/working-with-extensions/publishing-extension
 
-#### Note
-Currently there is an incompatibility between node and some modules used in the extension
-which produces the following error on `vsce package`
-
-        opensslErrorStack: [ 'error:03000086:digital envelope routines::initialization error' ],
-        library: 'digital envelope routines',
-        reason: 'unsupported',
-        code: 'ERR_OSSL_EVP_UNSUPPORTED'
-
-See https://stackoverflow.com/questions/69665222/node-js-17-0-1-gatsby-error-digital-envelope-routinesunsupported-err-os
-
-This is fixed by doing `export NODE_OPTIONS=--openssl-legacy-provider` 
-
-The export command was added to the scripts in `package.json`.
-
-In the future is dependencies are updated
-this can be removed from `package.json`.
 
 #### Convert TextMate bundle features using [Yeoman](https://yeoman.io/learning/) code extension generator:
 
@@ -135,7 +118,7 @@ Keybindings must be added manually to package.json file to 'keybindings' section
 }
 ```
 
-## Test with a reference version of MHK
+## Testing with a reference version of MHK
 
 A reference version of MHH can be installed
 inside the devcontainer to provide a 
@@ -179,11 +162,12 @@ The extension can now be tested with
 a running MHK reference version.
 
 A good way to check if the kleio server is running 
-if to do in the Extension Development Host window:
+is to use `curl` in the Extension Development Host window:
 
 ```console
 $ curl http://localhost:8088
 > 
+```
 
 Different versions of MHK can also be tested
 by:
@@ -199,6 +183,43 @@ for an updated version of the reference MHK version.
 
 
 ## Known Issues
+
+### Error with _digital envelope routines_ when using vsce to create a package
+
+Currently there is an incompatibility between node and some modules used in the extension
+which produces the following error on `vsce package`
+
+        opensslErrorStack: [ 'error:03000086:digital envelope routines::initialization error' ],
+        library: 'digital envelope routines',
+        reason: 'unsupported',
+        code: 'ERR_OSSL_EVP_UNSUPPORTED'
+
+See https://stackoverflow.com/questions/69665222/node-js-17-0-1-gatsby-error-digital-envelope-routinesunsupported-err-os
+
+This is fixed by doing `export NODE_OPTIONS=--openssl-legacy-provider` 
+
+The export command was added to the scripts in `package.json`, e.g.
+
+    "vscode:prepublish": "export NODE_OPTIONS=--openssl-legacy-provider; webpack --mode production",
+
+   
+In the future is dependencies are updated
+this can be removed from `package.json`.
+
+
+### "error: invalid path" during git clone to Windows client 
+
+When cloning this repository of a windows machine
+some file names in the snippets defined here
+may conflict with a restrictive enforcement of
+Windows name conventions, generating an error
+that prevent the checkout of the branches.
+
+To prevent this do:
+
+    git config --global core.protectNTFS false
+
+For more information see https://confluence.atlassian.com/bitbucketserverkb/error-invalid-path-during-git-clone-to-windows-client-1085186345.html
 
 ## Release Notes
 
