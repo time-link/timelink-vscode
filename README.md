@@ -121,15 +121,15 @@ Keybindings must be added manually to package.json file to 'keybindings' section
 ## Testing with a reference version of MHK
 
 A reference version of MHH can be installed
-inside the devcontainer to provide a 
+inside the extension host container (created with F5) to provide a 
 reproductible environment. 
 
 The reference version contains the
 a full mhk-home directory capable of
-launcing MHK and the Kleio server.
+launching MHK and the Kleio server.
 
 1. Run the extension host from VS Code
-with FN5.
+with F5.
 2. In the new "Extension Development Host" 
 window select "Clone Git Repository"
 3. Clone http://github.com/joaquimrcarvalho/timelink-project
