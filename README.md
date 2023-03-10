@@ -31,7 +31,7 @@ that allows the development to be done inside a virtual machine.
 To run the dev container the VS Code `Dev Containers` extensions is necessary.
 
 When the repository is opened VS Code detects
-the `.devcontainer` folder and sugests to
+the `.devcontainer` folder and suggests to
 reopen the repository inside de container.
 
 _The first time this is done the docker
