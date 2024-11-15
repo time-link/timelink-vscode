@@ -3,6 +3,7 @@
  */
 
 import * as jayson from 'jayson';
+import Docker from 'dockerode';
 
 import * as vscode from 'vscode';
 import * as fs from 'fs';
@@ -20,10 +21,14 @@ export module KleioServiceModule {
         private mhkHome: string = "";
         private propertiesPath: string = "/system/conf/mhk_system.properties";
         private urlPath: string = "/json/";
+        private kleioVersion?: string;
 
         // client with default properties... 
         // will try to get url property from .mhk at user's home at runtime
         private client!: jayson.Client;
+
+        // Docker client that retrieves status during runtime
+        private dockerClient!: Docker;
 
         constructor() {
             this.init();
@@ -38,12 +43,16 @@ export module KleioServiceModule {
 
         init() {
             if (vscode.workspace.getConfiguration("timelink.kleio").kleioServerToken) {
+                // There's already a token within the extension preferences.
                 console.log("Init Kleio Server with custom extension properties");
                 this.initJsonClient();
             } else {
+                // No token proprities were found.
                 console.log("Init Kleio Server with configuration properties");
-                this.loadAdminToken();
-                this.loadKleioUrl();
+                // this.loadAdminToken(); // Find the variable MHKHome.
+                // this.loadKleioUrl();
+                this.loadKleioInfo();
+
             }
         }
 
@@ -115,7 +124,7 @@ export module KleioServiceModule {
             console.log('Loading Kleio Url');
             return new Promise<string>((resolve) => {
                 if (vscode.workspace.workspaceFolders) {
-                    this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
+                    //this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
                     if (this.mhkHome) {
                         let filePath = path.join(path.dirname(this.mhkHome), ".mhk");
                         if (fs.existsSync(filePath)) {
@@ -149,7 +158,7 @@ export module KleioServiceModule {
 
             return new Promise<string>((resolve) => {
                 if (vscode.workspace.workspaceFolders) {
-                    this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
+                    //this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
                     if (vscode.workspace.getConfiguration("timelink.kleio").kleioServerToken) {
                         // Ignore token from configuration files...
                         // Using custom admin token from VSC settings
@@ -171,6 +180,98 @@ export module KleioServiceModule {
                     }
                 }
             });
+        }
+
+        /**
+         * Attempts to retrieve Kleio server information from running docker instances
+         */
+        async loadKleioInfo() {
+
+            this.dockerClient = new Docker();
+            console.log("Attempting to retrieve Kleio server info from Docker.");
+            // Retrieve Kleio Home - CLARIFY MHKHOME QUESTIONS
+            this.findLocalKleioHome()
+            
+            // Check if containers are running
+            const server_status = await this.isServerRunning()
+        }
+
+        /**
+         *  WIP - Retrieve Kleio Home Directory. Temporarly return nothing.
+         */
+        findLocalKleioHome() {
+            return ""
+        }
+
+        /**
+         * Check if a kleio server is running in docker mapped to a given kleio home directory.
+         */
+        async isServerRunning(): Promise<boolean> {
+
+            const isRunning = await this.isDockerRunning(); // Wait for Docker check to complete
+            if (isRunning) {
+                console.log('Docker is running: Checking for all Kleio image instances...');
+                const container = this.getKServerContainer()
+                return true;
+            } else {
+                console.log('Docker is not running.');
+                vscode.window.showErrorMessage('ERROR: Docker is not running.');
+                return false;
+            }
+
+        }
+
+        /**
+         * Check if Docker is running.
+         */
+        async isDockerRunning(): Promise<boolean> {
+            try {
+                await this.dockerClient.ping();
+                return true;
+            } catch (error) {
+                console.error("Could not connect to Docker. Is it running?", error);
+                return false;
+            }
+        }
+
+
+        /**
+         * Check if a kleio server is running in docker, possibly mapped to a given kleio home directory.
+         */
+        getKServerContainer(){
+
+            const containers = this.getKServerContainerList()
+            return ""
+
+        }
+
+         /**
+         * Get the Kleio server containers currently running in docker
+         */
+        async getKServerContainerList() {
+            const isRunning = await this.isDockerRunning(); // Wait for Docker check to complete
+            if (isRunning) {
+                // Retrieve all containers and iterate over their image name to find if they are runing a kleio-server
+                const allContainers = await this.dockerClient.listContainers();
+                
+                let containers: Docker.ContainerInfo[] = [];
+
+                if (!this.kleioVersion) {
+                    containers = allContainers.filter(container => container.Image.includes('kleio-server:'));
+                }
+                else{
+                    containers = allContainers.filter(container => container.Image.includes(`kleio-server:${this.kleioVersion}`));
+                }
+                console.log(containers)
+                return true;
+            } else {
+                console.log('Docker is not running.');
+                vscode.window.showErrorMessage('ERROR: Docker is not running.');
+                return false;
+            }
+            
+            return ""
+          
         }
 
         /**

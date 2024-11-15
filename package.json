@@ -203,6 +203,7 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
+    "@types/dockerode": "^3.3.31",
     "@types/glob": "^7.1.1",
     "@types/mkdirp": "^0.5.2",
     "@types/mocha": "^5.2.6",
@@ -219,6 +220,7 @@
     "webpack-cli": "^3.3.12"
   },
   "dependencies": {
+    "dockerode": "^4.0.2",
     "jayson": "^3.2.0",
     "request": "^2.88.0",
     "request-promise": "^4.2.4"
