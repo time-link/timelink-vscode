@@ -192,7 +192,7 @@ export module KleioServiceModule {
 
             this.dockerClient = new Docker();
             console.log("Attempting to retrieve Kleio server info from Docker.");
-            // Retrieve Kleio Home - CLARIFY MHKHOME QUESTIONS
+            // Retrieve Kleio Home
             this.findLocalKleioHome()
             
             // Check if containers are running
@@ -223,9 +223,6 @@ export module KleioServiceModule {
 
             }
 
-
-
-            this.mhkHome = ""
             console.log("Kleio home is: ", this.mhkHome)
         }
 
@@ -328,7 +325,9 @@ export module KleioServiceModule {
                 console.log('Docker is not running.');
                 vscode.window.showErrorMessage('ERROR: Docker is not running.');
                 return null;
+                return null;
             }
+            
             
         }
 
