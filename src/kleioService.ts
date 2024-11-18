@@ -22,6 +22,7 @@ export module KleioServiceModule {
         private propertiesPath: string = "/system/conf/mhk_system.properties";
         private urlPath: string = "/json/";
         private kleioVersion?: string;
+        private stopDuplicates: boolean = false;
 
         // client with default properties... 
         // will try to get url property from .mhk at user's home at runtime
@@ -200,7 +201,14 @@ export module KleioServiceModule {
          *  WIP - Retrieve Kleio Home Directory. Temporarly return nothing.
          */
         findLocalKleioHome() {
-            return ""
+            //1. Determinar o directório base do workspace corrente > guardar em WSDIR
+            //2. Ver se o nome base do WSDIR é um de “timelink-home”, “mhk-home”, “kleio-home” se sim KHOME=WSDIR
+            //3. Se não, ver se nos directórios acima de WSDIR existe algum “timelink-home”, “mhk-home”, “kleio-home”, se sim então KHOME = esse directório; neste caso a Kleio home está acima do workspace to VS Code.
+            //4. Se não, ver nos “filhos” WSDIR” se existe  “timelink-home”, “mhk-home”, “kleio-home”, se sim KHOME = esse directório
+            //5. Se não, assumimos que WSDIR é KHOME
+            const kleio_home: string = "this_directory/here"
+            console.log("Kleio home is: ", kleio_home)
+            this.mhkHome = ""
         }
 
         /**
@@ -238,11 +246,45 @@ export module KleioServiceModule {
         /**
          * Check if a kleio server is running in docker, possibly mapped to a given kleio home directory.
          */
-        getKServerContainer(){
+        async getKServerContainer(){
 
-            const containers = this.getKServerContainerList()
-            return ""
+            const containers = await this.getKServerContainerList();
 
+            if(!containers) {
+                return null;
+            }
+            else if(!this.mhkHome) { //CHANGE TO MHKHOME ONCE ALGORITHM IS DONE
+                
+                let found = false;
+                let firstFound = null;
+
+                containers.forEach(container => {
+                    const kleioHomeMount = container.Mounts.filter((mount: any) => mount.Destination === '/kleio-home');
+                    
+                    if (kleioHomeMount.length > 0 && kleioHomeMount[0].Source === this.mhkHome) { //CHANGE TO if (kleioHomeMount.length > 0 && kleioHomeMount[0].Source === this.mhkHome) ONCE MHKHOME IS DONE
+                        if(!found){
+                            found = true;
+                            firstFound = container;
+                        }
+                        else {
+                            if (this.stopDuplicates){
+                                this.dockerClient.getContainer(container.Id).stop()
+                                this.dockerClient.getContainer(container.Id).remove()
+                            }
+                        }
+                    }
+                });
+
+                if (!found){
+                    return null;
+                }
+                else{
+                    return firstFound;
+                }
+            }
+            else {
+                return containers[0];
+            }
         }
 
          /**
@@ -262,16 +304,13 @@ export module KleioServiceModule {
                 else{
                     containers = allContainers.filter(container => container.Image.includes(`kleio-server:${this.kleioVersion}`));
                 }
-                console.log(containers)
-                return true;
+                return containers;
             } else {
                 console.log('Docker is not running.');
                 vscode.window.showErrorMessage('ERROR: Docker is not running.');
-                return false;
+                return null;
             }
             
-            return ""
-          
         }
 
         /**
