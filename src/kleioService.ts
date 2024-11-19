@@ -9,7 +9,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as url from 'url';
-import { time } from 'console';
+import * as os from 'os';
 
 export module KleioServiceModule {
 
@@ -196,34 +196,89 @@ export module KleioServiceModule {
             this.findLocalKleioHome()
             
             // Check if containers are running
-            const server_status = await this.isServerRunning()
+            // const server_status = await this.isServerRunning()
         }
 
         /**
          *  Find kleio home directory.
          */
         findLocalKleioHome() {
-            
-            //3. Se não, ver se nos directórios acima de WSDIR existe algum “timelink-home”, “mhk-home”, “kleio-home”, se sim então KHOME = esse directório; neste caso a Kleio home está acima do workspace to VS Code.
-            //4. Se não, ver nos “filhos” WSDIR” se existe  “timelink-home”, “mhk-home”, “kleio-home”, se sim KHOME = esse directório
-            //5. Se não, assumimos que WSDIR é KHOME
-            
-            const timelinkHomeNames = ["kleio-home", "timelink-home", "mhk-home"]
+                  
+            const timelinkHomeNames = ["kleio-home", "timelink-home", "mhk-home"];
             
             if(vscode.workspace.workspaceFolders){
 
-                //1 - Determine base workspace directory and save as WSDir
+                //1 - Determine base workspace directory and save it as the current directory.
                 this.workspaceDirectory = vscode.workspace.workspaceFolders[0].uri.fsPath
                 const baseName = path.basename(this.workspaceDirectory)
-                
-                //2. If basename matches expected Timelink Home Names set as MHKHome “timelink-home”, “mhk-home”, “kleio-home” se sim KHOME=WSDIR
+
                 if (timelinkHomeNames.includes(baseName)) {
+                    //2. If basename matches expected Timelink Home Names set it as the Kleio Home.
                     this.mhkHome = this.workspaceDirectory
+                }
+                else{
+                    //3. If not, recursively check directories above/below current directory for Kleio Home.
+                    this.findKleioHomeDirectory(this.workspaceDirectory, timelinkHomeNames)
+                    if(!this.mhkHome){
+                        this.mhkHome = this.workspaceDirectory
+                    }
                 }
 
             }
 
-            console.log("Kleio home is: ", this.mhkHome)
+            console.log("Set Kleio Home to ", this.mhkHome)
+        }
+
+        /**
+         * Iteratively check directories above/below home directory for the Kleio Home name. If it doesn't exist, check 
+         */
+
+        findKleioHomeDirectory(currentPath: any, timelinkHomeNames: string[]){
+            
+            let dirPath = currentPath;
+            
+            const userHome = os.homedir();
+
+            while (dirPath !== userHome) {
+                for (const homeDir of timelinkHomeNames) {
+                    if (fs.existsSync(path.join(dirPath, homeDir)) && fs.lstatSync(path.join(dirPath, homeDir)).isDirectory()) {
+                        this.mhkHome = path.join(dirPath, homeDir);
+                        break;
+                    }
+                }
+                if(this.mhkHome) break;
+                
+                const parentDir = path.dirname(dirPath);
+
+                if (parentDir === dirPath) break; // Reached root
+                
+                dirPath = parentDir;
+            }
+
+            // If not, check directories under current working directory.
+            if (!this.mhkHome) {
+                const stack = [currentPath];
+        
+                while (stack.length > 0) {
+                    const dir = stack.pop()!;
+                    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                        if (entry.isDirectory() && !entry.name.startsWith('.')) { // Don't search hidden folders.
+                            
+                            const subDirName = entry.name;
+        
+                            if (timelinkHomeNames.includes(subDirName)) {
+                                this.mhkHome = path.join(dir, subDirName);
+                                break;
+                            }
+        
+                            stack.push(path.join(dir, subDirName));
+                        }
+                    }
+                    if (this.mhkHome) {
+                        break;
+                    }
+                }
+            }
         }
 
         /**
@@ -269,7 +324,7 @@ export module KleioServiceModule {
                 console.log("No containers found running a Kleio image instance.")
                 return null;
             }
-            else if(!this.mhkHome) { //CHANGE TO MHKHOME ONCE ALGORITHM IS DONE
+            else if(this.mhkHome) {
                 
                 let found = false;
                 let firstFound = null;
@@ -277,7 +332,7 @@ export module KleioServiceModule {
                 containers.forEach(container => {
                     const kleioHomeMount = container.Mounts.filter((mount: any) => mount.Destination === '/kleio-home');
                     console.log(kleioHomeMount[0])
-                    if (kleioHomeMount.length > 0) { //CHANGE TO if (kleioHomeMount.length > 0 && kleioHomeMount[0].Source === this.mhkHome) ONCE MHKHOME IS DONE
+                    if ((kleioHomeMount.length > 0 && kleioHomeMount[0].Source === this.mhkHome)) {
                         if(!found){
                             found = true;
                             firstFound = container;
@@ -325,10 +380,7 @@ export module KleioServiceModule {
                 console.log('Docker is not running.');
                 vscode.window.showErrorMessage('ERROR: Docker is not running.');
                 return null;
-                return null;
-            }
-            
-            
+            }          
         }
 
         /**
