@@ -195,8 +195,18 @@ export module KleioServiceModule {
             // Retrieve Kleio Home
             this.findLocalKleioHome()
             
-            // Check if containers are running
-            // const server_status = await this.isServerRunning()
+            // Check if containers are running and retrieve them if the server home is the same as local
+            const container = await this.isServerRunning()
+            
+            if (container){
+                // Get token/URL
+                console.log("Server with kleio home found. Getting token and url...")
+                this.getKServerToken(container)
+            }
+            else {
+                // Spin up new Docker Container with mhkHome and new token/port
+                console.log("No server with current Kleio Home found. Starting a new container...")
+            }
         }
 
         /**
@@ -226,7 +236,7 @@ export module KleioServiceModule {
 
             }
 
-            console.log("Set Kleio Home to ", this.mhkHome)
+            console.log("Kleio Home set to:", this.mhkHome)
         }
 
         /**
@@ -284,17 +294,17 @@ export module KleioServiceModule {
         /**
          * Check if a kleio server is running in docker mapped to a given kleio home directory.
          */
-        async isServerRunning(): Promise<boolean> {
+        async isServerRunning(): Promise<Docker.ContainerInfo | null> {
 
             const isRunning = await this.isDockerRunning(); // Wait for Docker check to complete
             if (isRunning) {
                 console.log('Docker is running: Checking for all Kleio image instances...');
                 const container = await this.getKServerContainer()
-                return true;
+                return container;
             } else {
                 console.log('Docker is not running.');
                 vscode.window.showErrorMessage('ERROR: Docker is not running.');
-                return false;
+                return null;
             }
 
         }
@@ -331,14 +341,14 @@ export module KleioServiceModule {
 
                 containers.forEach(container => {
                     const kleioHomeMount = container.Mounts.filter((mount: any) => mount.Destination === '/kleio-home');
-                    console.log(kleioHomeMount[0])
-                    if ((kleioHomeMount.length > 0 && kleioHomeMount[0].Source === this.mhkHome)) {
+                    if ((kleioHomeMount.length > 0 && this.normalizeDockerPath(kleioHomeMount[0].Source) === path.normalize(this.mhkHome))) {
                         if(!found){
                             found = true;
                             firstFound = container;
                         }
                         else {
                             if (this.stopDuplicates){
+                                console.log(`Duplicate container found (ID: ${container.Id}). Stopping and removing it..`)
                                 this.dockerClient.getContainer(container.Id).stop()
                                 this.dockerClient.getContainer(container.Id).remove()
                             }
@@ -356,6 +366,33 @@ export module KleioServiceModule {
             else {
                 return containers[0];
             }
+        }
+
+        /**
+         * Normalize docker path according to OS so we can find kleio home.
+         */
+        normalizeDockerPath(dockerPath: string): string {
+            const platform = process.platform;
+        
+            if (platform === 'win32') {
+                const driveLetterMatch = dockerPath.match(/^\/run\/desktop\/mnt\/host\/([a-zA-Z])\/(.*)/);
+                if (driveLetterMatch) {
+                    const driveLetter = driveLetterMatch[1].toLowerCase();
+                    const relativePath = driveLetterMatch[2];
+                    const windowsPath = `${driveLetter}:\\${relativePath.replace(/\//g, '\\')}`;
+                    console.log(path.normalize(windowsPath))
+                    return path.normalize(windowsPath);
+                }
+            }
+        
+            if (platform === 'linux' || platform === 'darwin') {
+                if (dockerPath.startsWith('/run/desktop/mnt/host/')) {
+                    const dockerNormalizedPath = dockerPath.replace('/run/desktop/mnt/host/', '/');
+                    return path.normalize(dockerNormalizedPath); // Normalize path for Unix-based systems
+                }
+            }
+
+            return path.normalize(dockerPath);
         }
 
          /**
@@ -381,6 +418,34 @@ export module KleioServiceModule {
                 vscode.window.showErrorMessage('ERROR: Docker is not running.');
                 return null;
             }          
+        }
+
+        /**
+         * Get the Kleio server container admin token and url.
+         */
+        async getKServerToken(container: Docker.ContainerInfo) {
+
+            if(!container) {
+                const container_list = await this.getKServerContainerList();
+                if(container_list){
+                    container = container_list[0]
+                }
+            }
+            
+            const containerDetails = await this.dockerClient.getContainer(container.Id).inspect()
+
+            this.token = containerDetails.Config.Env.filter((env: string) => env.startsWith("KLEIO_ADMIN_TOKEN"))[0].split("=")[1];
+
+            const exposedPort = container.Ports.find(port => port.PublicPort);
+            if (exposedPort) {
+                this.kleioHost = exposedPort.IP === "0.0.0.0" ? "localhost" : exposedPort.IP;
+                this.kleioPort = Number(exposedPort.PublicPort)
+            } else {
+                console.error("Could not retrieve hostname and port.")
+            }
+
+            console.log("Token found:", this.token)
+            console.log("Kleio URL: ", `http://${this.kleioHost}:${this.kleioPort}`)
         }
 
         /**
