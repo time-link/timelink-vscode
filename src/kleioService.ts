@@ -10,6 +10,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as url from 'url';
 import * as os from 'os';
+import * as net from 'net';
 
 export module KleioServiceModule {
 
@@ -206,6 +207,9 @@ export module KleioServiceModule {
             else {
                 // Spin up new Docker Container with mhkHome and new token/port
                 console.log("No server with current Kleio Home found. Starting a new container...")
+
+                const version = "latest"
+                const _ = this.startKleioServer(undefined, version)
             }
         }
 
@@ -235,8 +239,236 @@ export module KleioServiceModule {
                 }
 
             }
-
             console.log("Kleio Home set to:", this.mhkHome)
+        }
+
+        /**
+         *  Starts a kleio server in docker.
+         */
+        async startKleioServer(
+            image: string = "timelinkserver/kleio-server",
+            version: string | null = null,
+            kleioHome: string | null = null,
+            kleioAdminToken: string | null = null,
+            kleioServerPort="8088",
+            kleioExternalPort: number | null = null,
+            kleioServerWorkers="3",
+            kleioIdleTimeout=900,
+            kleioConfDir=null,
+            kleioSourceDir=null,
+            kleioStruDir=null,
+            kleioTokenDb=null,
+            kleioDefaultStru=null,
+            kleioDebug=null,
+            consistency: string = "cached",
+            update: boolean = false,
+            reuse: boolean = true,
+        ): Promise <Docker.Container | null> {
+            
+            const isRunning = await this.isDockerRunning(); // Wait for Docker check to complete
+            
+            if (!isRunning) {
+                console.error('Attempted to start a kleio server, but Docker is not running.');
+                vscode.window.showErrorMessage('Error: Attempted to start a kleio server, but Docker is not running.');
+                return null;
+            }
+
+            let exists = await this.getKServerContainer()
+
+            if (update){
+                
+                let getVersion = version ? version : "latest";
+                const currentImage = await this.dockerClient.getImage(`timelinkserver/kleio-server:${getVersion}`);
+                
+                try {
+
+                    console.log("Retrieving latest kleio-server image...")
+                    const latestImage = await this.dockerClient.pull(`${image}:${getVersion}`);
+
+                    // Listen for updates on the pull status
+                    latestImage.on('data', (data: Buffer) => {
+                        const output = data.toString();
+                        try {
+                            const parsedData = JSON.parse(output);
+                            if (parsedData.status) {
+                                console.log(`Status: ${parsedData.status} \r`);
+                            }
+
+                        } catch (error) {
+                        }
+                    });
+            
+                    // Wait for the stream to end (meaning the image has been pulled)
+                    await new Promise((resolve, reject) => {
+                        latestImage.on('end', resolve);
+                        latestImage.on('error', reject); 
+                    });
+            
+                    console.log(`Image ${image}:${getVersion} pulled successfully.`);
+                    const images = await this.dockerClient.listImages();
+                    const pulledImage = images.find(img => 
+                        img.RepoTags && img.RepoTags.includes(`${image}:${getVersion}`)
+                    );
+                    if (pulledImage){
+                        if (pulledImage.Id !== currentImage.id){
+                            console.log(`A newer image was donwloaded.`);
+                            if (exists){
+                                console.log("Current container was stopped and removed.");
+                                const oldContainer = this.dockerClient.getContainer(exists.Id);
+                                await oldContainer.stop();
+                                await oldContainer.remove();
+                                exists = null;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error occurred while pulling the image:", error);
+                    
+                }
+
+            }
+
+            if (exists){
+                if (reuse){
+                    console.log(`Found container running Kleio, and reuse is set to true.`)
+                    return this.dockerClient.getContainer(exists.Id);
+                }
+                else{
+                    console.log(`Found container running Kleio, but reuse is set to false. Stopping and removing container.`)
+                    const container = this.dockerClient.getContainer(exists.Id);
+                    await container.stop();
+                    await container.remove();
+                }
+            }
+
+            kleioHome = this.mhkHome
+            if (!kleioHome){
+                if(vscode.workspace.workspaceFolders){
+                    kleioHome = this.workspaceDirectory!
+                }
+                else{
+                    kleioHome = process.cwd()
+                }
+            }
+            else {
+                kleioHome = path.resolve(kleioHome);
+                // Check if the directory exists
+                if (!fs.existsSync(kleioHome)) {
+                    throw new Error(`Directory ${kleioHome} does not exist`);
+                }
+            }
+            
+            if(!kleioAdminToken){
+                kleioAdminToken = this.randomToken()
+            }
+
+            if(!kleioExternalPort){
+                kleioExternalPort = await this.findFreePort()
+            }
+            
+            const kleioEnv: { [key: string]: string | number } = {};
+            
+            if (kleioConfDir !== null) { kleioEnv["KLEIO_CONF_DIR"] = kleioConfDir; }
+            if (kleioSourceDir !== null) { kleioEnv["KLEIO_SOURCE_DIR"] = kleioSourceDir; }
+            if (kleioStruDir !== null) { kleioEnv["KLEIO_STRU_DIR"] = kleioStruDir; }
+            if (kleioTokenDb !== null) { kleioEnv["KLEIO_TOKEN_DB"] = kleioTokenDb; }
+            if (kleioDefaultStru !== null) { kleioEnv["KLEIO_DEFAULT_STRU"] = kleioDefaultStru; }
+            if (kleioDebug !== null) { kleioEnv["KLEIO_DEBUG"] = kleioDebug; }
+            if (kleioServerWorkers !== null) { kleioEnv["KLEIO_SERVER_WORKERS"] = kleioServerWorkers; }
+            if (kleioIdleTimeout !== null) { kleioEnv["KLEIO_IDLE_TIMEOUT"] = kleioIdleTimeout; }
+            if (kleioAdminToken !== null) { kleioEnv["KLEIO_ADMIN_TOKEN"] = kleioAdminToken; }
+            if (kleioHome !== null) { kleioEnv["KLEIO_HOME"] = kleioHome; }
+            if (kleioServerPort !== null) { kleioEnv["KLEIO_SERVER_PORT"] = kleioServerPort; }
+
+            try {
+                const kleioContainer = await this.dockerClient.createContainer({
+                    Image: `${image}:${version}`,
+                    Tty: true,
+                    ExposedPorts: {
+                        [`${kleioServerPort}/tcp`]: {}
+                    },
+                    Env: Object.entries(kleioEnv).map(([key, value]) => `${key}=${value}`),
+                    HostConfig: {
+                        PortBindings: {
+                            [`${kleioServerPort}/tcp`]: [{ HostPort: `${kleioExternalPort}` }]
+                        },
+                        Binds: [`${kleioHome}:/kleio-home:${consistency}`]
+                    }
+                });
+        
+                await kleioContainer.start();
+                let timeout = 15
+                let stopTime = 1
+                let elapsedTime = 0
+
+                const container = this.dockerClient.getContainer(kleioContainer.id);
+                while (elapsedTime < timeout) {
+                    const containerInfo = await container.inspect();
+                    
+                    if (containerInfo.State.Status === 'running') {
+                        console.log("Kleio server started successfully.");
+                        return container;
+                    }
+                    
+                    // Wait for stopTime before checking again
+                    await new Promise(resolve => setTimeout(resolve, stopTime * 1000));
+                    elapsedTime += stopTime;
+                }
+                throw new Error("Kleio server did not start within the alloted time.");
+            } catch (error) {
+                console.error('Error starting Kleio container:', error);
+                throw error;
+            }
+        }
+
+        /**
+         * Generate a random token
+         */
+        randomToken(length: number = 32): string{
+
+            const alphabet: string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+            const randomValues = new Uint8Array(length);
+            crypto.getRandomValues(randomValues); // Securely generate random values~
+            
+            let token = "";
+            for (let i = 0; i < length; i++) {
+                token += alphabet[randomValues[i] % alphabet.length]; // Map random value to an alphabet index
+            }
+
+            return token;
+        }
+
+        /**
+         * Find next available port to serve Kleio on.
+         */
+        findFreePort(fromPort: number = 8088, toPort: number = 8099): Promise<number> {
+            return new Promise((resolve, reject) => {
+                // Try each port in the range once
+                const tryPort = (port: number) => {
+                    const server = net.createServer();
+                    server.once('error', () => {
+                        // If the port is already in use, resolve nothing and move to the next port
+                        console.log(`Port ${port} already in use.`)
+                        server.close();
+                        if (port < toPort) {
+                            tryPort(port + 1); // Try the next port
+                        } else {
+                            reject(new Error(`No free ports available in the range ${fromPort}-${toPort}`));
+                        }
+                    });
+        
+                    server.once('listening', () => {
+                        // Port is free, resolve with this port and close the server
+                        console.log(`Port ${port} available - will be used to start server.`)
+                        server.close();
+                        resolve(port);
+                    });
+        
+                    server.listen(port, 'localhost');
+                };
+        
+                tryPort(fromPort); // Start with the first port in the range
+            });
         }
 
         /**
@@ -303,7 +535,7 @@ export module KleioServiceModule {
                 return container;
             } else {
                 console.log('Docker is not running.');
-                vscode.window.showErrorMessage('ERROR: Docker is not running.');
+                vscode.window.showErrorMessage('Error: Docker is not running.');
                 return null;
             }
 
@@ -339,9 +571,10 @@ export module KleioServiceModule {
                 let found = false;
                 let firstFound = null;
 
-                containers.forEach(container => {
+                for(const container of containers) {
                     const kleioHomeMount = container.Mounts.filter((mount: any) => mount.Destination === '/kleio-home');
                     if ((kleioHomeMount.length > 0 && this.normalizeDockerPath(kleioHomeMount[0].Source) === path.normalize(this.mhkHome))) {
+                        console.log("Server with matching home found at:", this.normalizeDockerPath(kleioHomeMount[0].Source))
                         if(!found){
                             found = true;
                             firstFound = container;
@@ -349,12 +582,13 @@ export module KleioServiceModule {
                         else {
                             if (this.stopDuplicates){
                                 console.log(`Duplicate container found (ID: ${container.Id}). Stopping and removing it..`)
-                                this.dockerClient.getContainer(container.Id).stop()
-                                this.dockerClient.getContainer(container.Id).remove()
+                                const container_to_remove = this.dockerClient.getContainer(container.Id)
+                                await container_to_remove.stop()
+                                await container_to_remove.remove()
                             }
                         }
                     }
-                });
+                };
 
                 if (!found){
                     return null;
@@ -380,7 +614,6 @@ export module KleioServiceModule {
                     const driveLetter = driveLetterMatch[1].toLowerCase();
                     const relativePath = driveLetterMatch[2];
                     const windowsPath = `${driveLetter}:\\${relativePath.replace(/\//g, '\\')}`;
-                    console.log(path.normalize(windowsPath))
                     return path.normalize(windowsPath);
                 }
             }
@@ -415,7 +648,7 @@ export module KleioServiceModule {
                 return containers;
             } else {
                 console.log('Docker is not running.');
-                vscode.window.showErrorMessage('ERROR: Docker is not running.');
+                vscode.window.showErrorMessage('Error: Docker is not running.');
                 return null;
             }          
         }
