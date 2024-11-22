@@ -311,7 +311,7 @@ export module KleioServiceModule {
                     );
                     if (pulledImage){
                         if (pulledImage.Id !== currentImage.id){
-                            console.log(`A newer image was donwloaded.`);
+                            console.log(`A newer image was downloaded.`);
                             if (exists){
                                 console.log("Current container was stopped and removed.");
                                 const oldContainer = this.dockerClient.getContainer(exists.Id);
