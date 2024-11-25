@@ -209,7 +209,8 @@ export module KleioServiceModule {
                 console.log("No server with current Kleio Home found. Starting a new container...")
 
                 const version = "latest"
-                const _ = this.startKleioServer(undefined, version)
+                const updateOnCheckbox = vscode.workspace.getConfiguration().get<boolean>('timelink.explorer.updateKleioImage', false);
+                const _ = this.startKleioServer(undefined, version, updateOnCheckbox)
             }
         }
 
@@ -248,6 +249,7 @@ export module KleioServiceModule {
         async startKleioServer(
             image: string = "timelinkserver/kleio-server",
             version: string | null = null,
+            update: boolean = false,
             kleioHome: string | null = null,
             kleioAdminToken: string | null = null,
             kleioServerPort="8088",
@@ -261,7 +263,6 @@ export module KleioServiceModule {
             kleioDefaultStru=null,
             kleioDebug=null,
             consistency: string = "cached",
-            update: boolean = false,
             reuse: boolean = true,
         ): Promise <Docker.Container | null> {
             
@@ -276,7 +277,7 @@ export module KleioServiceModule {
             let exists = await this.getKServerContainer()
 
             if (update){
-                
+                console.log("Update is checked - will attempt to retrieve the latest image.")
                 let getVersion = version ? version : "latest";
                 const currentImage = await this.dockerClient.getImage(`timelinkserver/kleio-server:${getVersion}`);
                 
@@ -366,7 +367,7 @@ export module KleioServiceModule {
                 kleioExternalPort = await this.findFreePort()
             }
             
-            const kleioEnv: { [key: string]: string | number } = {};
+            const kleioEnv: { [key: string]: string | number | null } = {};
             
             if (kleioConfDir !== null) { kleioEnv["KLEIO_CONF_DIR"] = kleioConfDir; }
             if (kleioSourceDir !== null) { kleioEnv["KLEIO_SOURCE_DIR"] = kleioSourceDir; }
