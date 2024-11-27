@@ -6,7 +6,6 @@
 import { JSONRPCClient } from "json-rpc-2.0";
 
 import * as vscode from 'vscode';
-// import * as fs from 'fs';
 import * as path from 'path';
 // import * as url from 'url';
 
@@ -16,6 +15,7 @@ export module KleioServiceModule {
         private static instance: KleioService;
 
         private kleioUrl: string = "http://localhost:8088";
+        private localServer: string = "http://localhost:3000";
         private token?: string;
         private urlPath: string = "/json/";
         private mhkHome: string = "";
@@ -24,6 +24,11 @@ export module KleioServiceModule {
         private propertiesFile: string = "mhk_system.properties";
 
         private client!: JSONRPCClient;
+
+        // Docker client that retrieves status during runtime
+        private kleioVersion: string = "latest";
+        private stopDuplicates: boolean = false;
+        private workspaceDirectory?: string;
 
         constructor() {
             this.init();
@@ -42,18 +47,98 @@ export module KleioServiceModule {
                 this.initJsonClient();
             } else {
                 console.log("Init Kleio Server with configuration properties");
-                await this.loadAdminToken();
-                this.loadKleioParams();
+                console.log("Retrieving Kleio Home from active server...");
+                
+                // Retrieve Kleio Home
+                this.findLocalKleioHome()
+
+                // Get token and URL info from Docker
+                console.log("Retrieving Kleio Server information from Docker...");
+                await this.loadSettingsFromDocker()
+                this.initJsonClient();
             }
         }
+
+        /**
+         *  Find kleio home directory.
+         */
+        findLocalKleioHome() {
+            
+            const timelinkHomeNames = ["kleio-home", "timelink-home", "mhk-home"];
+            
+            if(vscode.workspace.workspaceFolders){
+
+                //1 - Determine base workspace directory and save it as the current directory.
+                this.workspaceDirectory = vscode.workspace.workspaceFolders[0].uri.fsPath
+                const baseName = path.basename(this.workspaceDirectory)
+
+                if (timelinkHomeNames.includes(baseName)) {
+                    //2. If basename matches expected Timelink Home Names set it as the Kleio Home.
+                    this.mhkHome = this.workspaceDirectory
+                }
+                else{
+                    //3. If not, recursively check directories above/below current directory for Kleio Home.
+                    this.fetchKleioHome(this.workspaceDirectory)
+                    if(!this.mhkHome){
+                        this.mhkHome = this.workspaceDirectory
+                    }
+                }
+
+            }
+            console.log("Kleio Home set to:", this.mhkHome)
+        }
+
+        fetchKleioHome = async (workspaceDirectory: string) => {
+            try {
+                const response = await fetch(`${this.localServer}/find-kleio-home?workspacePath=${workspaceDirectory}`);
+                const data = await response.json();
+                if(data.kleioHome !== null){
+                    this.mhkHome = data.kleioHome
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        };
+
+        /**
+         * Attempts to retrieve Kleio server information from running docker instances
+         */
+        loadSettingsFromDocker = async () => {
+            
+            const updateOnCheckbox = vscode.workspace.getConfiguration().get<boolean>('timelink.explorer.updateKleioImage', false);
+            console.log("IS UPDATE ON:", updateOnCheckbox)
+            
+            try {
+                console.log("Connecting to Node backend...")
+
+                const response = await fetch(
+                                    `${this.localServer}/is-server-running?` +
+                                    `kleiohome=${encodeURIComponent(this.mhkHome)}&` +
+                                    `stopduplicates=${this.stopDuplicates}&` +
+                                    `update=${updateOnCheckbox}&` +
+                                    `updateversion=${encodeURIComponent(this.kleioVersion)}`
+                                );
+                const data = await response.json();
+                
+                if (data.isDockerRunning && data.token) {
+                    console.log("TOKEN AND URL FOUND!")
+                    console.log("Kleio Token:", data.token)
+                    console.log("Kleio URL:", data.kleiourl)
+                    this.kleioUrl = data.kleiourl as string;
+                    this.token = data.token as string;
+
+                } else {
+                    console.log("Could not retrieve Token and URL from Docker.");
+                }
+            } catch (error) {
+                console.log('Error connecting to Node server endpoint:', error);
+            }
+        };
 
         initJsonClient() {
             var section: string = "timelink.kleio";
             if (vscode.workspace.getConfiguration(section).kleioServerUrl) {
                 this.kleioUrl = vscode.workspace.getConfiguration(section).kleioServerUrl;
-            }
-            if (vscode.workspace.getConfiguration(section).kleioServerToken) {
-                this.token = vscode.workspace.getConfiguration(section).kleioServerToken;
             }
             if (vscode.workspace.getConfiguration(section).kleioServerToken) {
                 this.token = vscode.workspace.getConfiguration(section).kleioServerToken;
@@ -154,7 +239,7 @@ export module KleioServiceModule {
             console.log('Loading Kleio Url from ' + this.mhkHome);
             return new Promise<string>(async (resolve) => {
                 if (vscode.workspace.workspaceFolders) {
-                    await this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
+                    //await this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
                     if (this.mhkHome) {
                         let propPath = path.join(this.mhkHome, this.propertiesPath);
 

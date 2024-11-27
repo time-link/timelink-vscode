@@ -2,7 +2,7 @@
   "name": "kleio",
   "displayName": "Time Link Bundle (Web version)",
   "description": "(Beta version for usage with VSCode Web) Time Link (formerly MHK / TimeLink) is a web application that manages databases for micro-historical research.",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "publisher": "time-link",
   "engines": {
     "vscode": "^1.69.0"
@@ -15,11 +15,11 @@
   "categories": [
     "Extension Packs",
     "Language Packs"
-  ],
+  ],  
   "activationEvents": [
     "onLanguage:kleio",
     "onView:timelink.views.fileExplorer"
-  ],
+  ],  
   "browser": "./dist/web/extension.js",
   "contributes": {
     "configuration": {
@@ -50,6 +50,11 @@
           "type": "boolean",
           "default": false,
           "description": "Launch Status Tree Views Expanded."
+        },
+        "timelink.explorer.updateKleioImage": {
+          "type": "boolean",
+          "default": false,
+          "description": "Update server to the latest kleio image."
         }
       }
     },
@@ -205,23 +210,35 @@
     "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. ."
   },
   "devDependencies": {
-    "@types/vscode": "^1.69.0",
+    "@types/cors": "^2.8.17",
+    "@types/dockerode": "^3.3.32",
     "@types/mocha": "^9.1.1",
-    "eslint": "^8.20.0",
+    "@types/vscode": "^1.69.0",
+    "@types/webpack-env": "^1.17.0",
     "@typescript-eslint/eslint-plugin": "^5.31.0",
     "@typescript-eslint/parser": "^5.31.0",
-    "mocha": "^10.0.0",
-    "typescript": "^4.7.4",
     "@vscode/test-web": "^0.0.29",
-    "ts-loader": "^9.3.1",
-    "webpack": "^5.74.0",
-    "webpack-cli": "^4.10.0",
-    "@types/webpack-env": "^1.17.0",
     "assert": "^2.0.0",
-    "process": "^0.11.10"
+    "eslint": "^8.20.0",
+    "mocha": "^10.0.0",
+    "process": "^0.11.10",
+    "ts-loader": "^9.3.1",
+    "typescript": "^4.7.4",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0"
   },
   "dependencies": {
+    "@types/express": "^5.0.0",
+    "buffer": "^6.0.3",
+    "cors": "^2.8.5",
+    "dockerode": "^4.0.2",
+    "express": "^4.21.1",
     "json-rpc-2.0": "^1.3.0",
-    "path-browserify": "^1.0.1"
+    "net": "^1.0.2",
+    "os": "^0.1.2",
+    "querystring-es3": "^0.2.1",
+    "ssh2": "^1.16.0",
+    "stream-http": "^3.2.0",
+    "url": "^0.11.4"
   }
 }
