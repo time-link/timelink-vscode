@@ -69,7 +69,13 @@ export module KleioServiceModule {
 
             // Get token and URL info from Docker
             console.log("Retrieving Kleio Server information from Docker...");
-            await this.loadSettingsFromDocker()
+            try{
+                await this.loadSettingsFromDocker()
+            } catch(error){
+                vscode.window.showErrorMessage("Error retrieving information - Make sure Node server is running.")
+                throw error;  
+            }
+            
             this.initJsonClient();
         }
 
@@ -111,7 +117,7 @@ export module KleioServiceModule {
                     this.mhkHome = data.kleioHome
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error connecting to Node server endpoint. Make sure local server is running.');
             }
         };
 
@@ -144,8 +150,8 @@ export module KleioServiceModule {
                     console.log("Could not retrieve Token and URL from Docker.");
                 }
             }catch (error) {
-                console.log('Error connecting to Node server endpoint:', error);
-                console.error("Unable to connect to Kleio Server. Fix settings or run Docker for local server.")
+                console.error("Error connecting to Node server endpoint. Make sure local server is running.")
+                throw error;
             }
         };
 
@@ -341,7 +347,7 @@ export module KleioServiceModule {
                     console.log("Could not retrieve Token and URL from Docker.");
                 }
             } catch (error) {
-                console.log('Error connecting to Node server endpoint:', error);
+                console.log('Error connecting to Node server endpoint. Make sure local server is running.');
             }
         }
 

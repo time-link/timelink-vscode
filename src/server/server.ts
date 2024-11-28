@@ -5,7 +5,7 @@ import path from 'path';
 import Docker from 'dockerode';
 import * as net from 'net';
 
-
+const crypto = require('crypto');
 const cors = require('cors');
 const app = express();
 const port = 3000;
