@@ -47,14 +47,16 @@ export module KleioServiceModule {
         }
 
         async init() {
+            
             if (vscode.workspace.getConfiguration("timelink.kleio").kleioServerToken) {
                 console.log("Init Kleio Server with custom extension properties");
-                this.initJsonClient();
+                await this.initJsonClient();
             } else {
                 console.log("Init Kleio Server with configuration properties");
                 console.log("Retrieving Kleio Home from active server...");
-                this.retrieveSettingsFromDocker()
+                await this.retrieveSettingsFromDocker()
             }
+            
             this.resolveInitialized(); // Mark the service as initialized
         }
 
@@ -76,7 +78,7 @@ export module KleioServiceModule {
                 throw error;  
             }
             
-            this.initJsonClient();
+            await this.initJsonClient();
         }
 
         //
@@ -90,7 +92,7 @@ export module KleioServiceModule {
             if(vscode.workspace.workspaceFolders){
 
                 //1 - Determine base workspace directory and save it as the current directory.
-                this.workspaceDirectory = vscode.workspace.workspaceFolders[0].uri.fsPath
+                this.workspaceDirectory = vscode.workspace.workspaceFolders[0].uri.fsPath.replace(/\\/g, "/");
                 const baseName = path.basename(this.workspaceDirectory)
 
                 if (timelinkHomeNames.includes(baseName)) {
@@ -171,7 +173,7 @@ export module KleioServiceModule {
 
             if(!this.mhkHome || !this.token || !this.kleioUrl) {
                 console.log("One or more configurations necessary to initiate the JSON Client are missing. Retrieving through Docker...")
-                this.retrieveSettingsFromDocker()
+                await this.retrieveSettingsFromDocker()
                 return;
             }
 
@@ -187,7 +189,6 @@ export module KleioServiceModule {
                     body: JSON.stringify(jsonRPCRequest),
                 }).then((response) => {
                     console.log("JSONRPCClient");
-                    console.log("URL: ", this.mhkHome.concat(this.urlPath))
                     console.log(response);
                     if (response.status === 200) {
                         // Use client.receive when you received a JSON-RPC response.
@@ -309,7 +310,6 @@ export module KleioServiceModule {
          * Loads Kleio Server admin token from mhk-home
          */
         async loadAdminToken() {
-            console.log('Loading admin token');
             // TODO: change this to load from repo
             /*
             return new Promise<string>(async (resolve) => {
@@ -331,23 +331,25 @@ export module KleioServiceModule {
                     }
                 }
             });*/
+            if(!this.token){
+                console.log('Loading admin token');
+                try {
+                    const response = await fetch(
+                                        `${this.localServer}/get-token?` +
+                                        `kleiohome=${encodeURIComponent(this.mhkHome)}`
+                                    );
+                    const data = await response.json();
+                    
+                    if (data.isDockerRunning && data.token) {
+                        this.kleioUrl = data.kleiourl as string;
+                        this.token = data.token as string;
 
-            try {
-                const response = await fetch(
-                                    `${this.localServer}/get-token?` +
-                                    `kleiohome=${encodeURIComponent(this.mhkHome)}`
-                                );
-                const data = await response.json();
-                
-                if (data.isDockerRunning && data.token) {
-                    this.kleioUrl = data.kleiourl as string;
-                    this.token = data.token as string;
-
-                } else {
-                    console.log("Could not retrieve Token and URL from Docker.");
+                    } else {
+                        console.log("Could not retrieve Token and URL from Docker.");
+                    }
+                } catch (error) {
+                    console.log('Error connecting to Node server endpoint. Make sure local server is running.');
                 }
-            } catch (error) {
-                console.log('Error connecting to Node server endpoint. Make sure local server is running.');
             }
         }
 
@@ -366,6 +368,28 @@ export module KleioServiceModule {
             return path.normalize(this.pathToUnix(this.kleioHome.concat(stringPath.replace(this.mhkHome, ""))));
         }
 
+               
+        /**
+         * Normalize Kleio Home Path with special options if on Windows.
+         */
+        normalizePath(filePath: string): string {
+
+            let normalizedPath = filePath
+            const isWindows = /^([a-zA-Z]:[\\/]|\/[a-zA-Z]:)/.test(filePath);
+
+            if (isWindows) {
+                // Windows: Convert backslashes to forward slashes and remove the drive letter
+                normalizedPath = normalizedPath.replace(/\\/g, "/");
+                normalizedPath = normalizedPath.replace(/^\/?[a-zA-Z]:/, "");
+                if (!normalizedPath.startsWith("/")) {
+                    normalizedPath = "/" + normalizedPath; // Add leading slash if missing
+                }
+            }
+
+            normalizedPath = path.normalize(normalizedPath)
+            return normalizedPath
+        }
+
 
         /**
          * Get a file. Obtains a link to download a file specified in the Path parameter
@@ -374,7 +398,7 @@ export module KleioServiceModule {
             
             await this.initialized;
 
-            let filePathNormalized = this.relativeUnixPath(path.normalize(filePath));
+            let filePathNormalized = this.relativeUnixPath(filePath);
     
             console.log("translationsGet " + filePathNormalized);
 
@@ -406,22 +430,25 @@ export module KleioServiceModule {
          * If path points to a directory translates files in the directory
          */
         translationsTranslate(filePath: string): Promise<any> {
-            let filePathNormalized = path.normalize(filePath);
+            let filePathNormalized = this.relativeUnixPath(filePath);
             // if (!this.mhkHome || !filePathNormalized.includes(this.mhkHome)) {
             //     console.log("MHK Home and File Path:");
             //     console.log(this.mhkHome);
             //     console.log(filePath);
             //     throw new Error("File Path not in MHK Home");
             // }
-
+            console.log("translationsTranslate " + filePathNormalized);
+            
+            let params = {
+                "path": filePathNormalized,
+                "spawn": "no",
+                "token": this.token
+            };
+            
+            console.log('>>>> ');
+            console.log(params);
+            
             return new Promise<any>((resolve) => {
-                let params = {
-                    "path": this.relativeUnixPath(filePathNormalized),
-                    "spawn": "no",
-                    "token": this.token
-                };
-                console.log('>>>> ');
-                console.log(params);
                 return this.client
                     .request("translations_translate", params)
                     .then((result: any) => {
