@@ -113,7 +113,7 @@ function normalizeDockerPath(dockerPath: string): string {
 /**
  * Check if a kleio server is running in docker, possibly mapped to a given kleio home directory.
  */
-async function getKServerContainer(kleioHome: string, stopDuplicates: boolean){
+async function getKServerContainer(kleioHome: string, stopDuplicates: boolean = false){
 
     const containers = await getKServerContainerList();
 
@@ -271,6 +271,9 @@ async function startKleioServer(
                         exists = null;
                     }
                 }
+                else{
+                    console.log("Pulled a new image but old image already was on the latest version.")
+                }
             }
         } catch (error) {
             console.error("Error occurred while pulling the image:", error);
@@ -424,7 +427,7 @@ app.get('/find-kleio-home', (req, res) => {
 //API Endpoint for Docker.
 app.get('/is-server-running', async (req, res) => {
     try {
-
+        console.log("DOCKER SERVER REQUEST")
         const kleioHome = req.query.kleiohome as string;
         const stopDuplicates = req.query.stopduplicates === 'true';
         const updateImage = req.query.update === 'true';
@@ -462,6 +465,31 @@ app.get('/is-server-running', async (req, res) => {
     } catch (error) {
         console.log('Error checking Docker status:', error);
         res.status(500).json({ isDockerRunning: true, token: null, url: null});
+    }
+});
+
+//API Endpoint to retrieve token.
+app.get('/get-token', async (req, res) => {
+    try {
+        console.log("GET TOKEN REQUEST")
+        const kleioHome = req.query.kleiohome as string;
+        const isRunning = await isDockerRunning();
+
+        if (isRunning) {
+            const container = await getKServerContainer(kleioHome);
+            if (container){
+                const containerInfo = await getKServerToken(container)
+                res.json({ isDockerRunning: true, token: containerInfo.token});
+            }
+
+        } else {
+            console.log('Attempt to retrieve token failed - Is Docker running?');
+            res.json({ isDockerRunning: true, token: null});
+        }
+
+    } catch (error) {
+        console.log('Error checking Docker status:', error);
+        res.status(500).json({ isDockerRunning: true, token: null});
     }
 });
 

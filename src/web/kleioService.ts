@@ -29,8 +29,13 @@ export module KleioServiceModule {
         private kleioVersion: string = "latest";
         private stopDuplicates: boolean = false;
         private workspaceDirectory?: string;
+        private initialized: Promise<void>;
+        private resolveInitialized!: () => void;
 
         constructor() {
+            this.initialized = new Promise((resolve) => {
+                this.resolveInitialized = resolve;
+            });
             this.init();
         }
 
@@ -48,17 +53,27 @@ export module KleioServiceModule {
             } else {
                 console.log("Init Kleio Server with configuration properties");
                 console.log("Retrieving Kleio Home from active server...");
-                
-                // Retrieve Kleio Home
-                this.findLocalKleioHome()
-
-                // Get token and URL info from Docker
-                console.log("Retrieving Kleio Server information from Docker...");
-                await this.loadSettingsFromDocker()
-                this.initJsonClient();
+                this.retrieveSettingsFromDocker()
             }
+            this.resolveInitialized(); // Mark the service as initialized
         }
 
+        //
+        /**
+         *  Retrieve Kleio Home, Token and URL from Docker.
+         */
+        async retrieveSettingsFromDocker() {
+
+            // Retrieve Kleio Home
+            this.findLocalKleioHome()
+
+            // Get token and URL info from Docker
+            console.log("Retrieving Kleio Server information from Docker...");
+            await this.loadSettingsFromDocker()
+            this.initJsonClient();
+        }
+
+        //
         /**
          *  Find kleio home directory.
          */
@@ -106,7 +121,6 @@ export module KleioServiceModule {
         loadSettingsFromDocker = async () => {
             
             const updateOnCheckbox = vscode.workspace.getConfiguration().get<boolean>('timelink.explorer.updateKleioImage', false);
-            console.log("IS UPDATE ON:", updateOnCheckbox)
             
             try {
                 console.log("Connecting to Node backend...")
@@ -121,7 +135,6 @@ export module KleioServiceModule {
                 const data = await response.json();
                 
                 if (data.isDockerRunning && data.token) {
-                    console.log("TOKEN AND URL FOUND!")
                     console.log("Kleio Token:", data.token)
                     console.log("Kleio URL:", data.kleiourl)
                     this.kleioUrl = data.kleiourl as string;
@@ -130,13 +143,16 @@ export module KleioServiceModule {
                 } else {
                     console.log("Could not retrieve Token and URL from Docker.");
                 }
-            } catch (error) {
+            }catch (error) {
                 console.log('Error connecting to Node server endpoint:', error);
+                console.error("Unable to connect to Kleio Server. Fix settings or run Docker for local server.")
             }
         };
 
-        initJsonClient() {
+        async initJsonClient() {
             var section: string = "timelink.kleio";
+
+            // If any of these configurations are empty, setup through Docker instead.
             if (vscode.workspace.getConfiguration(section).kleioServerUrl) {
                 this.kleioUrl = vscode.workspace.getConfiguration(section).kleioServerUrl;
             }
@@ -146,9 +162,16 @@ export module KleioServiceModule {
             if (vscode.workspace.getConfiguration(section).kleioServerHome) {
                 this.mhkHome = vscode.workspace.getConfiguration(section).kleioServerHome;
             }
+
+            if(!this.mhkHome || !this.token || !this.kleioUrl) {
+                console.log("One or more configurations necessary to initiate the JSON Client are missing. Retrieving through Docker...")
+                this.retrieveSettingsFromDocker()
+                return;
+            }
+
             // ???
             this.kleioHome = "";
-
+            
             this.client = new JSONRPCClient((jsonRPCRequest) =>
                 fetch(this.kleioUrl.concat(this.urlPath), {
                     method: "POST",
@@ -158,6 +181,7 @@ export module KleioServiceModule {
                     body: JSON.stringify(jsonRPCRequest),
                 }).then((response) => {
                     console.log("JSONRPCClient");
+                    console.log("URL: ", this.mhkHome.concat(this.urlPath))
                     console.log(response);
                     if (response.status === 200) {
                         // Use client.receive when you received a JSON-RPC response.
@@ -169,6 +193,9 @@ export module KleioServiceModule {
                     }
                 })
             );
+            
+            //TODO: Attempt to connect to server and if fails, ask user if retrieve info from docker.
+
         }
 
         /**
@@ -275,15 +302,15 @@ export module KleioServiceModule {
         /**
          * Loads Kleio Server admin token from mhk-home
          */
-        loadAdminToken(): Promise<string> {
+        async loadAdminToken() {
             console.log('Loading admin token');
             // TODO: change this to load from repo
+            /*
             return new Promise<string>(async (resolve) => {
                 if (vscode.workspace.workspaceFolders) {
                     await this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
                     if (this.mhkHome) {
                         let propPath = path.join(this.mhkHome, this.propertiesPath);
-                        console.log(propPath);
                         let propKey = (this.propertiesFile === ".kleio") ? "kleio_token" : "mhk.kleio.service.token.admin";
                         this.loadProperty(propPath, propKey).then((response: any) => {
                             if (!response.error) {
@@ -297,7 +324,25 @@ export module KleioServiceModule {
                         });
                     }
                 }
-            });
+            });*/
+
+            try {
+                const response = await fetch(
+                                    `${this.localServer}/get-token?` +
+                                    `kleiohome=${encodeURIComponent(this.mhkHome)}`
+                                );
+                const data = await response.json();
+                
+                if (data.isDockerRunning && data.token) {
+                    this.kleioUrl = data.kleiourl as string;
+                    this.token = data.token as string;
+
+                } else {
+                    console.log("Could not retrieve Token and URL from Docker.");
+                }
+            } catch (error) {
+                console.log('Error connecting to Node server endpoint:', error);
+            }
         }
 
         /**
@@ -319,9 +364,12 @@ export module KleioServiceModule {
         /**
          * Get a file. Obtains a link to download a file specified in the Path parameter
          */
-        translationsGet(filePath: string, status: string = "") {
-            let filePathNormalized = this.relativeUnixPath(path.normalize(filePath));
+        async translationsGet(filePath: string, status: string = "") {
+            
+            await this.initialized;
 
+            let filePathNormalized = this.relativeUnixPath(path.normalize(filePath));
+    
             console.log("translationsGet " + filePathNormalized);
 
             return new Promise<any>((resolve, reject) => {
