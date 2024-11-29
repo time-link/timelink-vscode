@@ -748,10 +748,6 @@ export class KleioStatusExplorer {
 
 		vscode.commands.registerCommand('timelink.views.fileExplorer.openKleioFile', (resource) => this.openResource(resource));
 
-		this.kleioService.loadAdminToken().then(() => {
-			console.log("Loaded Admin Token");
-			this.refresh();
-		});
 	}
 
 	private openResource(resource: vscode.Uri): void {

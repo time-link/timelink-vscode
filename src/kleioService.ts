@@ -8,7 +8,6 @@ import Docker from 'dockerode';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as url from 'url';
 import * as os from 'os';
 import * as net from 'net';
 
@@ -17,11 +16,9 @@ export module KleioServiceModule {
     export class KleioService {
         private static instance: KleioService;
 
-        private kleioHost: string = "localhost";
-        private kleioPort: number = 8088;
+        private kleioUrl: string = "http://localhost:8088";
         private token?: string;
         private mhkHome: string = "";
-        private propertiesPath: string = "/system/conf/mhk_system.properties";
         private urlPath: string = "/json/";
         private kleioVersion?: string;
         private stopDuplicates: boolean = false;
@@ -53,136 +50,44 @@ export module KleioServiceModule {
             } else {
                 // No token proprities were found.
                 console.log("Init Kleio Server with configuration properties");
-                // this.loadAdminToken(); // Find the variable MHKHome.
-                // this.loadKleioUrl();
                 this.loadKleioInfo();
 
             }
         }
 
         initJsonClient() {
+ 
             var section: string = "timelink.kleio";
-            if (vscode.workspace.getConfiguration(section).kleioServerPort) {
-                this.kleioPort = Number(vscode.workspace.getConfiguration(section).kleioServerPort);
-            }
-            if (vscode.workspace.getConfiguration(section).kleioServerHost) {
-                this.kleioHost = vscode.workspace.getConfiguration(section).kleioServerHost;
+            
+            // If any of these configurations are empty, setup through Docker instead.
+            if (vscode.workspace.getConfiguration(section).kleioServerUrl) {
+                this.kleioUrl = vscode.workspace.getConfiguration(section).kleioServerUrl;
             }
             if (vscode.workspace.getConfiguration(section).kleioServerToken) {
                 this.token = vscode.workspace.getConfiguration(section).kleioServerToken;
             }
+            if (vscode.workspace.getConfiguration(section).kleioServerHome) {
+                this.mhkHome = vscode.workspace.getConfiguration(section).kleioServerHome;
+            }
+
+            // Check if all settings exist
+            if(!this.mhkHome || !this.token || !this.kleioUrl) {
+                console.log("One or more configurations necessary to initiate the JSON Client are missing. Retrieving through Docker...")
+                vscode.window.showInformationMessage("One or more configurations necessary to initiate the JSON Client are missing. Retrieving through Docker....");
+                console.log(this.mhkHome, this.token, this.kleioUrl)
+                this.loadKleioInfo()
+                return;
+            }
+
+            // Parse url to extract hostname/port
+            const url = new URL(this.kleioUrl);
+            let kleioHost = url.hostname;
+            let kleioPort = parseInt(url.port, 10);
 
             this.client = jayson.Client.http({
-                host: this.kleioHost,
+                host: kleioHost,
                 path: this.urlPath,
-                port: this.kleioPort
-            });
-        }
-
-        /**
-         * Recursively finds file name in parent folder hierarchy
-         */
-        findFile(currentPath: any, fileName: string): any {
-            if (currentPath === path.sep) { // root folder, no mhk home found
-                return null;
-            } else if (fs.existsSync(path.join(currentPath, path.sep, fileName))) {
-                return currentPath;
-            } else {
-                return this.findFile(path.dirname(currentPath), fileName);
-            }
-        }
-
-        /**
-         * Loads given property from given file
-         */
-        loadProperty(filePath: string, property: string): Promise<string> {
-            return new Promise<string>((resolve, reject) => {
-                vscode.workspace.openTextDocument(filePath).then((document) => {
-                    document.getText().split(/\r?\n/).forEach(element => {
-                        if (element.startsWith(property + "=")) {
-                            resolve(element.replace(property + "=", ""));
-                        }
-                    });
-                    reject("Property not found");
-                });
-            });
-        }
-
-        findMHKHome(fsPath: any) {
-            if (!this.mhkHome) {
-                // find .mhk file in hierarchy
-                this.mhkHome = this.findFile(fsPath, ".mhk-home");
-                this.propertiesPath = "/system/conf/mhk_system.properties";
-            }
-            // couldn't file mhk-home, try with .mhk file
-            if (!this.mhkHome) {
-                this.mhkHome = this.findFile(fsPath, ".mhk");
-                this.propertiesPath = "/.mhk";
-            }
-        }
-
-        /**
-         * Loads Kleio Server url from .mhk
-         */
-        loadKleioUrl(): Promise<string> {
-            console.log('Loading Kleio Url');
-            return new Promise<string>((resolve) => {
-                if (vscode.workspace.workspaceFolders) {
-                    //this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
-                    if (this.mhkHome) {
-                        let filePath = path.join(path.dirname(this.mhkHome), ".mhk");
-                        if (fs.existsSync(filePath)) {
-                            this.loadProperty(filePath, "kleio_url").then((response: any) => {
-                                if (!response.error) {
-                                    let parsedUrl = url.parse(response);
-                                    this.kleioHost = parsedUrl.hostname ? parsedUrl.hostname : this.kleioHost;
-                                    this.kleioPort = parsedUrl.port ? Number(parsedUrl.port) : this.kleioPort;
-                                    this.client = jayson.Client.http({
-                                        host: this.kleioHost,
-                                        path: this.urlPath,
-                                        port: this.kleioPort
-                                    });
-                                    console.log("Loaded Kleio Server Url: " + response);
-                                }
-                            }).catch(error => {
-                                vscode.window.showErrorMessage("Error loading Kleio Server url: translation services will not be available.");
-                                console.log(error);
-                            });
-                        }
-                    }
-                }
-            });
-        }
-
-        /**
-         * Loads Kleio Server admin token from mhk-home or from VSCode settings
-         */
-        loadAdminToken(): Promise<string> {
-            console.log('Loading admin token');
-
-            return new Promise<string>((resolve) => {
-                if (vscode.workspace.workspaceFolders) {
-                    //this.findMHKHome(vscode.workspace.workspaceFolders[0].uri.fsPath);
-                    if (vscode.workspace.getConfiguration("timelink.kleio").kleioServerToken) {
-                        // Ignore token from configuration files...
-                        // Using custom admin token from VSC settings
-                        console.log('Using custom admin token');
-                        resolve(this.token!);
-                        return;
-                    }
-                    if (this.mhkHome) {
-                        let propPath = path.join(this.mhkHome, this.propertiesPath);
-                        this.loadProperty(propPath, "mhk.kleio.service.token.admin").then((response: any) => {
-                            if (!response.error) {
-                                this.token = response.replace("mhk.kleio.service.token.admin=", "");
-                                resolve(this.token!);
-                            }
-                        }).catch(error => {
-                            vscode.window.showErrorMessage("Error loading Kleio admin token: translation services will not be available.");
-                            console.log(error);
-                        });
-                    }
-                }
+                port: kleioPort
             });
         }
 
@@ -202,16 +107,20 @@ export module KleioServiceModule {
             if (container){
                 // Get token/URL
                 console.log("Server with kleio home found. Getting token and url...")
-                this.getKServerToken(container)
+                await this.getKServerToken(container)
+
             }
             else {
                 // Spin up new Docker Container with mhkHome and new token/port
                 console.log("No server with current Kleio Home found. Starting a new container...")
+                vscode.window.showInformationMessage("No server with current Kleio Home found. Starting a new container...");
 
                 const version = "latest"
                 const updateOnCheckbox = vscode.workspace.getConfiguration().get<boolean>('timelink.explorer.updateKleioImage', false);
-                const _ = this.startKleioServer(undefined, version, updateOnCheckbox)
+                await this.startKleioServer(undefined, version, updateOnCheckbox)
             }
+
+            this.initJsonClient()
         }
 
         /**
@@ -277,7 +186,8 @@ export module KleioServiceModule {
             let exists = await this.getKServerContainer()
 
             if (update){
-                console.log("Update is checked - will attempt to retrieve the latest image.")
+                console.log("Update option set to true - pulling latest image...")
+                vscode.window.showInformationMessage("Update option set to true - pulling latest image...");
                 let getVersion = version ? version : "latest";
                 const currentImage = await this.dockerClient.getImage(`timelinkserver/kleio-server:${getVersion}`);
                 
@@ -306,6 +216,8 @@ export module KleioServiceModule {
                     });
             
                     console.log(`Image ${image}:${getVersion} pulled successfully.`);
+                    vscode.window.showInformationMessage(`Image ${image}:${getVersion} pulled successfully.`);
+
                     const images = await this.dockerClient.listImages();
                     const pulledImage = images.find(img => 
                         img.RepoTags && img.RepoTags.includes(`${image}:${getVersion}`)
@@ -407,7 +319,11 @@ export module KleioServiceModule {
                     const containerInfo = await container.inspect();
                     
                     if (containerInfo.State.Status === 'running') {
+                        this.token = kleioAdminToken
                         console.log("Kleio server started successfully.");
+                        vscode.window.showInformationMessage("Kleio server started successfully.");
+                        console.log("Kleio URL: ", this.kleioUrl)
+                        console.log("Token set to:", this.token)
                         return container;
                     }
                     
@@ -672,14 +588,15 @@ export module KleioServiceModule {
 
             const exposedPort = container.Ports.find(port => port.PublicPort);
             if (exposedPort) {
-                this.kleioHost = exposedPort.IP === "0.0.0.0" ? "localhost" : exposedPort.IP;
-                this.kleioPort = Number(exposedPort.PublicPort)
+                const kleioHost = exposedPort.IP === "0.0.0.0" ? "localhost" : exposedPort.IP;
+                const kleioPort = Number(exposedPort.PublicPort)
+                this.kleioUrl = `http://${kleioHost}:${kleioPort}`
             } else {
                 console.error("Could not retrieve hostname and port.")
             }
 
             console.log("Token found:", this.token)
-            console.log("Kleio URL: ", `http://${this.kleioHost}:${this.kleioPort}`)
+            console.log("Kleio URL: ", this.kleioUrl)
         }
 
         /**
