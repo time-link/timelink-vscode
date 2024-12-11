@@ -10,6 +10,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import * as net from 'net';
+import { exec } from 'child_process';
 
 export module KleioServiceModule {
 
@@ -320,6 +321,7 @@ export module KleioServiceModule {
                     
                     if (containerInfo.State.Status === 'running') {
                         this.token = kleioAdminToken
+                        this.kleioUrl = `http://localhost:${kleioExternalPort}`
                         console.log("Kleio server started successfully.");
                         vscode.window.showInformationMessage("Kleio server started successfully.");
                         console.log("Kleio URL: ", this.kleioUrl)
@@ -362,26 +364,44 @@ export module KleioServiceModule {
             return new Promise((resolve, reject) => {
                 // Try each port in the range once
                 const tryPort = (port: number) => {
-                    const server = net.createServer();
-                    server.once('error', () => {
-                        // If the port is already in use, resolve nothing and move to the next port
-                        console.log(`Port ${port} already in use.`)
-                        server.close();
-                        if (port < toPort) {
-                            tryPort(port + 1); // Try the next port
-                        } else {
-                            reject(new Error(`No free ports available in the range ${fromPort}-${toPort}`));
+                    // Check if the port is already in use by Docker
+                    exec(`docker ps --filter "publish=${port}" --format "{{.Ports}}"`, (err, stdout) => {
+                        if (err) {
+                            reject(err);
+                            return;
                         }
-                    });
         
-                    server.once('listening', () => {
-                        // Port is free, resolve with this port and close the server
-                        console.log(`Port ${port} available - will be used to start server.`)
-                        server.close();
-                        resolve(port);
-                    });
+                        if (stdout.trim()) {
+                            // If Docker shows the port is in use, move to the next one
+                            console.log(`Port ${port} is in use by Docker.`);
+                            if (port < toPort) {
+                                tryPort(port + 1);
+                            } else {
+                                reject(new Error(`No free ports available in the range ${fromPort}-${toPort}`));
+                            }
+                            return;
+                        }
         
-                    server.listen(port, 'localhost');
+                        // If Docker doesn't use the port, check with net.createServer
+                        const server = net.createServer();
+                        server.once('error', () => {
+                            console.log(`Port ${port} is already in use.`);
+                            server.close();
+                            if (port < toPort) {
+                                tryPort(port + 1);
+                            } else {
+                                reject(new Error(`No free ports available in the range ${fromPort}-${toPort}`));
+                            }
+                        });
+        
+                        server.once('listening', () => {
+                            console.log(`Port ${port} is free and available.`);
+                            server.close();
+                            resolve(port);
+                        });
+        
+                        server.listen(port, 'localhost');
+                    });
                 };
         
                 tryPort(fromPort); // Start with the first port in the range
@@ -595,7 +615,9 @@ export module KleioServiceModule {
                 console.error("Could not retrieve hostname and port.")
             }
 
+            
             console.log("Token found:", this.token)
+            vscode.window.showInformationMessage(this.token);
             console.log("Kleio URL: ", this.kleioUrl)
         }
 
