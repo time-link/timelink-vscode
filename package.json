@@ -86,6 +86,10 @@
           "when": "viewItem == fileCli"
         },
         {
+          "command": "extension.deleteAllGeneratedFiles",
+          "when": "view == timelink.views.fileExplorer && viewItem != fileCli"
+        },
+        {
           "command": "revealFileInOS"
         }
       ]
@@ -121,6 +125,10 @@
       {
         "command": "extension.deleteGeneratedFiles",
         "title": "Delete Generated Files"
+      },
+      {
+        "command": "extension.deleteAllGeneratedFiles",
+        "title": "Delete All Generated Files In Folder"
       },
       {
         "command": "revealFileInOS",

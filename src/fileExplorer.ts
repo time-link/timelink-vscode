@@ -823,6 +823,44 @@ export class FileExplorer {
 		});
 	}
 
+	// delete cli and related filed
+	public deleteAllGeneratedFiles(uri: vscode.Uri): void {
+		var filesToDelete: vscode.Uri[] = [];
+		var action = 'Delete All Generated Files';
+		var message = 'The following files will be deleted from XXXX:';
+
+		const filesInFolder = fs.readdirSync(uri.fsPath);
+		
+		// get related files
+		for (let fileName of filesInFolder) {
+			
+			const filePath = path.join(uri.fsPath, fileName);
+			// Check if file extension matches the ones we want to delete
+
+			if (['.err', '.ids', '.org', '.rpt', '.xml'].includes(path.extname(fileName))) {
+				var currentUri = vscode.Uri.file(filePath);
+				if (fs.existsSync(currentUri.fsPath)) {
+					filesToDelete.push(currentUri);
+					message = message.concat('\n\n').concat(currentUri.fsPath);
+				}
+			}
+		}
+
+		// Show the message with the list of files to delete
+		if (filesToDelete.length > 0) {
+			vscode.window.showWarningMessage(message, { modal: true }, ...[action]).then((result) => {
+				if (result === action) {
+					for (let currentUri of filesToDelete) {
+						this.fullTreeDataProvider.delete(currentUri, { recursive: false });
+					}
+				}
+			});
+		} else {
+			vscode.window.showInformationMessage('No generated files found for deletion.');
+		}
+
+	}
+
 	public refresh(): void {
 		this.fullTreeDataProvider.refresh();
 	}

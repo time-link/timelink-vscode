@@ -6,6 +6,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [1.0.18] - 2024-12-11
 
+### Added
+- Added option to delete all generated files in a selected folder.
+
 ### Fixed
 - Fixed Docker port binding issues when starting multiple containers.
 

@@ -615,9 +615,7 @@ export module KleioServiceModule {
                 console.error("Could not retrieve hostname and port.")
             }
 
-            
             console.log("Token found:", this.token)
-            vscode.window.showInformationMessage(this.token);
             console.log("Kleio URL: ", this.kleioUrl)
         }
 

@@ -5,8 +5,9 @@ import * as vscode from 'vscode';
 import { HoverProvider } from "./hover";
 import { CompletionProvider } from "./completion";
 import { DiagnosticsProvider } from './diagnostics';
-import { FileExplorer, KleioStatusProvider, KleioStatusExplorer } from './fileExplorer';
+import { FileExplorer, KleioStatusExplorer } from './fileExplorer';
 import { KleioServiceModule } from './kleioService';
+import * as fs from 'fs';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -105,6 +106,20 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(disposable);
 
+	disposable = vscode.commands.registerCommand('extension.deleteAllGeneratedFiles', (event) => {
+		if (event) {
+			
+			// only execute if we are on a folder and not a file.
+			const isFolder = fs.statSync(event.uri.fsPath).isDirectory();
+			if (isFolder) {
+				fileExplorer.deleteAllGeneratedFiles(event.uri);
+			} else {
+				vscode.window.showWarningMessage("This is not a valid folder. No items will be deleted.");
+			}
+		
+			}
+	});
+	context.subscriptions.push(disposable);
 
 	disposable = vscode.commands.registerCommand('extension.reloadTranslationInfo', (event) => {
 		fileExplorer.refresh();
