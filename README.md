@@ -103,6 +103,7 @@ Keybindings must be added manually to package.json file to 'keybindings' section
 ### 1.0.18
 Fixed Docker port binding issues when starting multiple containers.
 Added option to delete all generated files in a selected folder.
+Smoother error handling.
 
 ### 1.0.17
 Updated VSCode settings for Kleio Home, URL and Token to reflect Web Extension code.

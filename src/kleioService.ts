@@ -56,7 +56,7 @@ export module KleioServiceModule {
             }
         }
 
-        initJsonClient() {
+        async initJsonClient() {
  
             var section: string = "timelink.kleio";
             
@@ -74,10 +74,14 @@ export module KleioServiceModule {
             // Check if all settings exist
             if(!this.mhkHome || !this.token || !this.kleioUrl) {
                 console.log("One or more configurations necessary to initiate the JSON Client are missing. Retrieving through Docker...")
-                vscode.window.showInformationMessage("One or more configurations necessary to initiate the JSON Client are missing. Retrieving through Docker....");
-                console.log(this.mhkHome, this.token, this.kleioUrl)
-                this.loadKleioInfo()
-                return;
+                if (await this.isDockerRunning()){
+                    vscode.window.showInformationMessage("One or more configurations necessary to initiate the JSON Client are missing. Retrieving through Docker....");
+                    this.loadKleioInfo();
+                    return;
+                }
+                else{
+                    return;
+                }
             }
 
             // Parse url to extract hostname/port
@@ -179,8 +183,6 @@ export module KleioServiceModule {
             const isRunning = await this.isDockerRunning(); // Wait for Docker check to complete
             
             if (!isRunning) {
-                console.error('Attempted to start a kleio server, but Docker is not running.');
-                vscode.window.showErrorMessage('Error: Attempted to start a kleio server, but Docker is not running.');
                 return null;
             }
 
@@ -471,7 +473,7 @@ export module KleioServiceModule {
                 const container = await this.getKServerContainer()
                 return container;
             } else {
-                console.log('Docker is not running.');
+                console.error('Docker is not running.');
                 vscode.window.showErrorMessage('Error: Docker is not running.');
                 return null;
             }
@@ -584,8 +586,6 @@ export module KleioServiceModule {
                 }
                 return containers;
             } else {
-                console.log('Docker is not running.');
-                vscode.window.showErrorMessage('Error: Docker is not running.');
                 return null;
             }          
         }
