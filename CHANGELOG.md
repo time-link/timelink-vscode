@@ -4,6 +4,12 @@ All notable changes to the "kleio" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [1.0.19] - 2025-01-07
+
+### Fixed
+- Fixed issues when attempting to connect to non-existing Docker container.
+- Better handling of setting retrieval from Docker when given preferences do not work.
+
 ## [1.0.18] - 2024-12-12
 
 ### Added

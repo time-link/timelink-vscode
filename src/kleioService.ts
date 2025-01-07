@@ -31,6 +31,7 @@ export module KleioServiceModule {
 
         // Docker client that retrieves status during runtime
         private dockerClient!: Docker;
+        private retrievedFromDocker: boolean = false;
 
         constructor() {
             this.init();
@@ -61,19 +62,20 @@ export module KleioServiceModule {
             var section: string = "timelink.kleio";
             
             // If any of these configurations are empty, setup through Docker instead.
-            if (vscode.workspace.getConfiguration(section).kleioServerUrl) {
+            if (vscode.workspace.getConfiguration(section).kleioServerUrl && !this.retrievedFromDocker) {
                 this.kleioUrl = vscode.workspace.getConfiguration(section).kleioServerUrl;
             }
-            if (vscode.workspace.getConfiguration(section).kleioServerToken) {
+            if (vscode.workspace.getConfiguration(section).kleioServerToken && !this.retrievedFromDocker) {
                 this.token = vscode.workspace.getConfiguration(section).kleioServerToken;
             }
-            if (vscode.workspace.getConfiguration(section).kleioServerHome) {
+            if (vscode.workspace.getConfiguration(section).kleioServerHome && !this.retrievedFromDocker) {
                 this.mhkHome = vscode.workspace.getConfiguration(section).kleioServerHome;
             }
 
             // Check if all settings exist
             if(!this.mhkHome || !this.token || !this.kleioUrl) {
                 console.log("One or more configurations necessary to initiate the JSON Client are missing. Retrieving through Docker...")
+                this.dockerClient = new Docker();
                 if (await this.isDockerRunning()){
                     vscode.window.showInformationMessage("One or more configurations necessary to initiate the JSON Client are missing. Retrieving through Docker....");
                     this.loadKleioInfo();
@@ -94,6 +96,48 @@ export module KleioServiceModule {
                 path: this.urlPath,
                 port: kleioPort
             });
+
+            // If settings weren't retrieved from Docker, test them first.
+            if(!this.retrievedFromDocker){
+                if (!await this.testConnection()) {
+                    vscode.window.showInformationMessage("INVALID SETTINGS: Failed to connect to kleio server - retrieving new settings from Docker.");
+                    this.loadKleioInfo();
+                }
+                else{
+                    vscode.window.showInformationMessage("Successfully connected to Docker.");
+                }
+            }
+
+        }
+
+        /**
+         * Attempts to connect to endpoint to validate settings.
+         */
+        async testConnection(): Promise<boolean> {
+            try {
+                // Set up test parameters for the request
+                let params = {
+                    "path": "",
+                    "spawn": "no",
+                    "token": this.token
+                }
+
+                // Make the request to the given endpoint
+                const response = await new Promise<any>((resolve, reject) => {
+                    this.client.request("translations_get", params, (err: any, response: any) => {
+                        if (err) reject(err);
+                        resolve(response);
+                    });
+                });
+                if (response) {
+                    console.log("TEST RESPONSE OBJECT: ", response)
+                    if(response.error){ return false}
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                return false;
+            }
         }
 
         /**
@@ -112,6 +156,7 @@ export module KleioServiceModule {
             if (container){
                 // Get token/URL
                 console.log("Server with kleio home found. Getting token and url...")
+                vscode.window.showInformationMessage("Server with kleio home found. Getting token and url...");
                 await this.getKServerToken(container)
 
             }
@@ -125,6 +170,8 @@ export module KleioServiceModule {
                 await this.startKleioServer(undefined, version, updateOnCheckbox)
             }
 
+            this.retrievedFromDocker = true;
+            vscode.window.showInformationMessage("Successfully connected to the Docker container.");
             this.initJsonClient()
         }
 

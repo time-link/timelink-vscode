@@ -100,6 +100,10 @@ Keybindings must be added manually to package.json file to 'keybindings' section
 
 ## Release Notes
 
+### 1.0.19
+Fixed bug where no error would display when preferences would connect to a non-existing container.
+Better handling of setting retrieval from Docker when given preferences do not work.
+
 ### 1.0.18
 Fixed Docker port binding issues when starting multiple containers.
 Added option to delete all generated files in a selected folder.
