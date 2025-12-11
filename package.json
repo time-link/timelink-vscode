@@ -1,6 +1,6 @@
 {
   "name": "kleio",
-  "displayName": "Time Link Bundle",
+  "displayName": "Timelink Kleio Extension",
   "keywords": [
     "TimeLink",
     "MHK",
@@ -11,7 +11,7 @@
     "Extension Packs",
     "Language Packs"
   ],
-  "description": "Time Link (formerly MHK / TimeLink) is a web application that manages databases for micro-historical research.",
+  "description": "Timelink (formerly MHK / TimeLink) is a software system that manages databases for micro-historical research.",
   "version": "1.0.19",
   "publisher": "time-link",
   "engines": {
@@ -30,7 +30,7 @@
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "Time Link",
+      "title": "Timelink",
       "properties": {
         "timelink.kleio.kleioServerUrl": {
           "type": "string",
@@ -50,7 +50,7 @@
         "timelink.explorer.showAllFilesInExplorer": {
           "type": "boolean",
           "default": false,
-          "description": "Show all files in Time Link Explorer."
+          "description": "Show all files in Timelink Explorer."
         },
         "timelink.explorer.collapsibleStateExpanded": {
           "type": "boolean",
@@ -172,7 +172,7 @@
       "activitybar": [
         {
           "id": "timelink",
-          "title": "Time Link",
+          "title": "Timelink",
           "icon": "images/icon_extension.svg"
         }
       ]
